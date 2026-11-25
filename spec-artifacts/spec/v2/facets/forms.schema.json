@@ -1,0 +1,9 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "contentPacks": {
+      "type": "boolean",
+      "description": "`true` ⇒ the host instantiates registered form templates. Normative consequences (`form-content-packs.md` §\"Instantiation\"): create through the SAME path a hand-authored form uses; degrade an unrecognized field type to a plain text input rather than failing; keep the instantiated form fully editable; execute nothing from the pack; sanitize/validate/authorize submissions exactly as hand-typed input. Pack-authored strings are UNTRUSTED and MUST propagate `meta.contentTrust: \"untrusted\"` into interpolated prompt segments (invariant `form-content-pack-string-trust-boundary`) — a signature proves authorship, not content safety."
+    }
+  }
+}

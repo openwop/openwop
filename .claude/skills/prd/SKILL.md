@@ -89,7 +89,7 @@ Wear the **Schema hat**. Answer:
    - `$schema: "https://json-schema.org/draft/2020-12/schema"` and `$id: "https://openwop.dev/spec/v2/<name>.schema.json"`?
    - Show the diff inline per `RFCS/0000-template.md` §Proposal.
 2. **Capabilities.** A new family or facet is a row in `spec/v2/declaration.json` (facets in `spec/v2/facets/`). `schemas/v2/capabilities.schema.json` is generated from it by `scripts/generate-from-declaration.mjs`; never hand-edit it.
-3. **OpenAPI diff.** `api/v2/` is derived: edit `api/openapi.yaml` (the source document) or the inline seams in `scripts/derive-v2-api.py`, then rerun `python3 scripts/derive-v2-api.py --write`. Specify `tag`, `operationId`, request/response schemas, and at least one error response. The gate lints `api/v2/openapi.yaml` with redocly.
+3. **OpenAPI diff.** `api/v2/` is its own source: edit `api/v2/openapi.yaml` (or `api/seams-v2.yaml` for a seam) directly, then rerun `python3 scripts/derive-v2-api.py --write` to regenerate `headers.md` and `path-manifest.json`. Specify `tag`, `operationId`, request/response schemas, and at least one error response. The gate lints `api/v2/openapi.yaml` with redocly.
 4. **AsyncAPI diff.** New channel or event? Name the message and payload schema. The gate validates `api/v2/asyncapi.yaml`.
 5. **Examples.** At least one positive and one negative example (what fails validation) per `RFCS/0000-template.md`.
 6. **Version impact.** Per `spec/v2/core/versioning.md`: does this change the discovery representation, a header, or event versioning?

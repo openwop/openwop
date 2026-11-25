@@ -183,6 +183,5 @@
       "type": "string",
       "format": "date-time"
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

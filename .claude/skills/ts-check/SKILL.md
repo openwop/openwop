@@ -45,7 +45,7 @@ If no target is given, run the full battery in Step 1.
 ## Core Principles
 
 1. **Understand before fixing.** Read the surrounding code, the schema, and the spec doc. A type error in a scenario usually means a schema in `schemas/v2/` or a spec rule in `spec/v2/core/` changed.
-2. **Root cause over symptoms.** The cause is usually upstream: a spec doc, a schema, the `api/openapi.yaml` source, the family declaration, or a fixture.
+2. **Root cause over symptoms.** The cause is usually upstream: a spec doc, a schema, `api/v2/openapi.yaml`, the family declaration, or a fixture.
 3. **Preserve intent.** Don't widen a type to make an error vanish — narrow the producer or fix the consumer.
 4. **The spec is the source of truth.** Normative text is in `spec/v2/core/` and `spec/v2/ext/`; wire shapes in `schemas/v2/` and `api/v2/`. When a scenario disagrees with them, fix the scenario. `spec/v1/` is frozen — never edit it to make a check pass.
 5. **Generated files are never hand-fixed.** `api/v2/*`, `schemas/v2/capabilities.schema.json`, `conformance/scenario-majors.json`, `conformance/requirements.json`, `spec-artifacts/**` and the status docs come from generators. Fix the input and regenerate.
@@ -121,7 +121,7 @@ python3 scripts/derive-v2-api.py --check
 | `test:self` | `conformance/src/lib/` | Helper regressions |
 | `check-req-only.mjs` | scenarios + coherence | Assertion-message and early-return discipline |
 | redocly / asyncapi | `api/`, `api/v2/`, `api/seams-v2.yaml` | OpenAPI 3.1 / AsyncAPI 3.1 violations |
-| `derive-v2-api.py --check` | `api/v2/` | Derived API out of date with its source |
+| `derive-v2-api.py --check` | `api/v2/` | `headers.md`, `path-manifest.json` or `info.version` out of date with `api/v2/` |
 
 **Iteration loop:** after fixing a batch (Steps 2–6), re-run every check. Repeat until all are clean, then go to Step 7.
 
@@ -159,7 +159,7 @@ python3 scripts/derive-v2-api.py --check
 Open the file, read the surrounding function / scenario, understand the intended behaviour.
 
 #### 3.2 Trace to the wire contract
-- Where does the type come from? `schemas/v2/*.schema.json`? `api/v2/openapi.yaml` (derived from `api/openapi.yaml` by `scripts/derive-v2-api.py`)? `spec/v2/declaration.json` (which generates `schemas/v2/capabilities.schema.json`)?
+- Where does the type come from? `schemas/v2/*.schema.json`? `api/v2/openapi.yaml` (its own source)? `spec/v2/declaration.json` (which generates `schemas/v2/capabilities.schema.json`)?
 - Which `spec/v2/core/` section states the rule the scenario asserts?
 
 #### 3.3 Check the scenario's major
@@ -182,7 +182,7 @@ Open the file, read the surrounding function / scenario, understand the intended
 
 #### Pattern 3: OpenAPI references a missing schema
 **Symptom:** `redocly lint` fails with "$ref not found".
-**Fix:** Confirm the schema exists at the relative path used in `api/openapi.yaml` (the source). For `api/v2/`, fix the source or the `$ref` rewrite in `scripts/derive-v2-api.py`, then `python3 scripts/derive-v2-api.py --write`. Never edit `api/v2/` by hand.
+**Fix:** Confirm the schema exists at the relative path the `$ref` in `api/v2/openapi.yaml` uses (`../../schemas/v2/…`), fix the `$ref` there, then `python3 scripts/derive-v2-api.py --write`. Never edit the frozen `api/openapi.yaml`.
 
 #### Pattern 4: AsyncAPI message missing a payload schema
 **Fix:** Bind the message to a payload schema by `$ref` in `api/asyncapi.yaml`, then regenerate `api/v2/asyncapi.yaml`.
@@ -216,7 +216,7 @@ When a fix encodes a new invariant (a stricter guard, a new field), check that a
 Run the regen chain, then the gate:
 
 ```bash
-node scripts/derive-core-adoption.mjs --write && node scripts/generate-from-declaration.mjs --write && python3 scripts/derive-v2-api.py --write && node scripts/generate-gaps.mjs --write && node scripts/generate-core-standard-manifest.mjs --write && node scripts/generate-assurance-status.mjs --write && node scripts/generate-protocol-status.mjs --write && node conformance/scripts/generate-scenario-majors.mjs --write && node conformance/scripts/generate-requirement-registry.mjs --write && node scripts/generate-spec-artifacts.mjs --write && node scripts/generate-review-packet.mjs --write && node scripts/generate-v1-eos-clock.mjs --write && node scripts/report-v2-witness-coverage.mjs --write && node scripts/check-spec-coherence.mjs --write
+node scripts/derive-core-adoption.mjs --write && node scripts/generate-from-declaration.mjs --write && python3 scripts/derive-v2-api.py --write && node scripts/generate-gaps.mjs --write && node scripts/generate-assurance-status.mjs --write && node scripts/generate-protocol-status.mjs --write && node conformance/scripts/generate-scenario-majors.mjs --write && node conformance/scripts/generate-requirement-registry.mjs --write && node scripts/generate-spec-artifacts.mjs --write && node scripts/generate-review-packet.mjs --write && node scripts/generate-v1-eos-clock.mjs --write && node scripts/report-v2-witness-coverage.mjs --write && node scripts/check-spec-coherence.mjs --write
 npm run openwop:check
 # ends with: === openwop:check OK — spec corpus is internally consistent ===
 ```

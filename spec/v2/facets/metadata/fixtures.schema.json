@@ -1,0 +1,10 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "type": "array",
+  "items": {
+    "type": "string",
+    "minLength": 1
+  },
+  "uniqueItems": true,
+  "description": "Optional v1 fixture workflow IDs the host has seeded. The conformance suite uses this list to decide which fixture-dependent scenarios run vs. skip. Each ID matches a stub at `node_modules/@openwop/openwop-conformance/fixtures/{id}.json`. Hosts MAY advertise vendor-prefixed IDs; clients MUST tolerate unknown IDs. Empty array or absent means the host advertises no fixtures."
+}

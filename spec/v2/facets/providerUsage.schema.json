@@ -1,0 +1,14 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "costEstimates": {
+      "type": "boolean",
+      "description": "When true, the host includes `costEstimateUsd` on `provider.usage` events using its internal rate table. When false/absent, only token counts are emitted."
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "Default ISO 4217 currency for `costEstimateUsd` values. When absent, USD is assumed."
+    }
+  }
+}

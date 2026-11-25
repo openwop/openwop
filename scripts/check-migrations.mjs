@@ -49,7 +49,7 @@ try {
 } catch (e) { failures.push(`schema: could not load Ajv from conformance/node_modules (${e.message})`); }
 failures.push(...movedFromFailures('movedFrom (spec/v2/major-1-migrations.json)', m1.v1.rows ?? [], m1.v2.rows ?? []));
 const dep = new Set(loadDeprecations(ROOT, { ...deprecationPaths(ROOT), v1: join(ROOT, 'spec/v1/deprecations.json') }).entries.map((e) => e.id));
-const gaps = new Set(JSON.parse(readFileSync(join(ROOT, 'spec/v1/gaps.json'), 'utf8')).entries.map((g) => g.id));
+const gaps = new Set(JSON.parse(readFileSync(join(ROOT, 'spec/v2/gaps.json'), 'utf8')).entries.map((g) => g.id));
 const seen = new Set();
 for (const r of reg.rows) {
   if (seen.has(r.id)) failures.push(`ids: duplicate ${r.id}`); seen.add(r.id);

@@ -7,7 +7,7 @@
 | **Status**        | `Active`                                                        |
 | **Author(s)**     | David Tufts (@davidscotttufts)                                  |
 | **Created**       | 2026-11-25                                                      |
-| **Updated**       | 2026-11-25 — filed straight to **`Active`**; comment window waived, not run, by the maintainer directly. **STEWARD OVERRIDE of RFC 0147 §A.6 — outside this grant** (recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers"). RFC 0001 §5: the cross-organization review this would otherwise get is deferred while the maintainer set is one organization. 2026-11-25 — UQ 1 and UQ 2 resolved during §B.2 (note under Unresolved questions). |
+| **Updated**       | 2026-11-25 — filed straight to **`Active`**; comment window waived, not run, by the maintainer directly. **STEWARD OVERRIDE of RFC 0147 §A.6 — outside this grant** (recorded in `MAINTAINERS.md` §"Bootstrap-phase RFC waivers"). RFC 0001 §5: the cross-organization review this would otherwise get is deferred while the maintainer set is one organization. 2026-11-25 — UQ 1 and UQ 2 resolved during §B.2 (note under Unresolved questions). 2026-11-25 — §C.1 cut over and §C.2 done (note under §C). |
 | **Affects**       | new `spec/v2/deprecations.json` + schema, new `spec/v2/major-1-migrations.json` + schema; `spec/v2/core/overview.md`, `capabilities.md`, `versioning.md`, `security-defaults.md`, `packs.md` (register and registry-tree citations); prose homes in `spec/v2/core/*` or `schemas/v2/*` descriptions for the concepts in §B.2; `scripts/derive-v2-api.py`, `scripts/derive-v2-schemas.mjs`; new gate `scripts/check-v2-self-contained.mjs`; `spec-artifacts/` package contents; `registry/.well-known/openwop-registry.json` (openwop-registry) |
 | **Compatibility** | `additive` on the wire (no request, response, event or discovery shape changes for a v2 host). §D changes the contents of the `@openwop/spec-artifacts` package and §E changes registry discovery after a dated floor; both carry a migration below. |
 | **Supersedes**    | —                                                               |
@@ -81,6 +81,16 @@ A concept that no v2 schema, operation or event uses is not re-homed; its v2 ref
 
 **§C.2** `docs/PROTOCOL-STATUS.md` headline counts (documents, schemas, operations) are computed from the v2 tree, and the root `package.json` version names the corpus major.
 
+> **Done 2026-11-25 (§C.1, §C.2; register G6, R3).** Cut over once, on the 2.49.12 tree: `derive-v2-api.py --check` and `derive-v2-schemas.mjs --check` both passed, so the committed v2 files equalled their v1 derivation byte for byte and no difference needed an explicit edit.
+>
+> - `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `api/seams-v2.yaml` are hand-edited. Their "Generated from" sentences are gone, and `info.contact.url` and `externalDocs` name `https://openwop.dev/spec/v2/`. `derive-v2-api.py` now reads only `api/v2/` and `spec/v2/release.json`: it stamps `info.version` and regenerates `headers.md` and `path-manifest.json`. `derive-v2-api-prose.yaml` is deleted.
+> - `derive-v2-schemas.mjs` is retired, with its two rule modules, and its 23 seeded schemas lost the seed marker. `generate-from-declaration.mjs` also projected facet shapes from the v1 discovery schema: each projection was written once to `spec/v2/facets/<key>.schema.json` (42 families) or `spec/v2/facets/metadata/<key>.schema.json` (7 metadata keys). The generated `capabilities.schema.json` is unchanged except for its provenance markers, and the generator reads no v1 file. `check-v2-schemas` and `check-v2-self-contained` fail on a v1 seed marker.
+> - v2 defines no gRPC operation (`declaration.json` `grpc` is `deleted`; `interop.md` §gRPC; the extension is a `Note`). The proto under `spec/v2/ext/grpc-transport/` was a byte-identical copy of the v1 file, so it was removed and the note says so.
+> - G6: the gap aggregate moved to `spec/v2/gaps.json`. Its prose-gap input moved verbatim to `spec/v2/spec-gaps.json` (with a schema; each row names its v1 id in `movedFrom`). `spec/v1/gaps.json` and `spec/v1/spec-gaps.json` are frozen.
+> - `spec/v1/core-standard-manifest.json` is frozen. It listed the v1 wire and was regenerated each release; `generate-core-standard-manifest.mjs` now refuses `--write` and checks only that the file matches its own digest. It left `openwop-check.sh` and the regen chains. The v2 profile floors are `spec/v2/profiles.json`. Its one remaining reader is the RFC 0155 §B parity test, which compares it with the v1 floor table and still passes.
+> - `check-v2-self-contained` also scans `api/seams-v2.yaml`. Its v1 citations were re-pointed to `packs.md` §"The registry tree", `spec/v2/errors.json` and the `node-pack-manifest` `name` description.
+> - §C.2: `docs/PROTOCOL-STATUS.md` counts come from `spec/v2/core/*.md`, `schemas/v2/*.schema.json` and `api/v2/openapi.yaml`, its `info.version` rows read `api/v2/`, and the root `package.json` version is `2.0.0`, the corpus major. Its only reader is the PROTOCOL-STATUS artifact-versions table.
+
 ### §D. The published package stops shipping v1
 
 **§D.1** From the first `@openwop/spec-artifacts` release after this RFC is `Accepted`, the 2.x package ships v2 contents only: no flat `schemas/*.schema.json`, no `api/openapi.yaml`, `api/asyncapi.yaml` or `api/grpc/openwop.proto` (v1), no `spec/v1/*.json`. Its description stops saying "v1 and v2".
@@ -149,7 +159,7 @@ A host-side witness for acceptance: a host's certified major-2 cut on a suite re
 - [ ] §A registers merged, schemas validate, the four citing sites updated.
 - [ ] `check-v2-self-contained` in `openwop-check.sh`, sabotage-witnessed, with zero `to-rehome` rows.
 - [ ] §B.2 homes merged (or UQ-1 deletions recorded); `check-core-budget` green.
-- [ ] §C: no v2 artifact generated from a v1 input; no `x-openwop-seeded-from: v1`.
+- [x] §C: no v2 artifact generated from a v1 input; no `x-openwop-seeded-from: v1`; PROTOCOL-STATUS counts from the v2 tree. (2026-11-25.)
 - [ ] §D: an `@openwop/spec-artifacts` release ships no v1 file; CHANGELOG names the last release that does.
 - [ ] §E: openwop-registry discovery updated and deployed; the alias-key deprecation row in `spec/v2/deprecations.json`.
 - [ ] **Host evidence (tier-1):** openwop-app's certified major-2 production cut on the suite release that ships §D, with the app's build and runtime reading no v1 corpus file (its `check-v1-reliance` extended to corpus inputs).

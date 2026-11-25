@@ -271,7 +271,7 @@ If any generated file needs refreshing, run the whole regen chain, in order, imm
 
 ```bash
 node scripts/derive-core-adoption.mjs --write && node scripts/generate-from-declaration.mjs --write && python3 scripts/derive-v2-api.py --write && node scripts/generate-gaps.mjs --write && \
-node scripts/generate-core-standard-manifest.mjs --write && node scripts/generate-assurance-status.mjs --write && \
+node scripts/generate-assurance-status.mjs --write && \
 node scripts/generate-protocol-status.mjs --write && node conformance/scripts/generate-scenario-majors.mjs --write && \
 node conformance/scripts/generate-requirement-registry.mjs --write && node scripts/generate-spec-artifacts.mjs --write && \
 node scripts/generate-review-packet.mjs --write && node scripts/generate-v1-eos-clock.mjs --write && \

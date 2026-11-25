@@ -1,0 +1,19 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "maxRowsPerTable": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maxColumnsPerRow": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "indexable": {
+      "type": "boolean"
+    },
+    "fullTextSearch": {
+      "type": "boolean"
+    }
+  }
+}

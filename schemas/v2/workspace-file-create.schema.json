@@ -18,6 +18,5 @@
       "default": "text/markdown",
       "description": "Advisory MIME type of `content`. Defaults to `text/markdown`."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

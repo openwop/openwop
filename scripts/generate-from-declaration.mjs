@@ -15,10 +15,13 @@
  *                                        evidence/cross-repo-manifests.json —
  *                                        never from a sibling checkout.
  *
- * Facet shapes are copied from the v1 capabilities schema property of the same
- * key (minus `supported`, `tier`, `experimentalUntil`) until a child's P3-B hand
- * edit replaces them; the copy is marked `x-openwop-seeded-from: v1` so the
- * closure scan can tell a seeded facet from a decided one.
+ * Facet shapes come from spec/v2/facets/<key>.schema.json (families) and
+ * spec/v2/facets/metadata/<key>.schema.json (kept metadata keys without an
+ * inline shape below), edited by hand. Until 2.49.12 the undecided ones were
+ * projected from the frozen v1 discovery schema at every run; the RFC 0266 §C
+ * cut-over wrote each projection to its v2 file (the generated schema was
+ * unchanged but for the provenance marker) and this generator stopped reading
+ * any v1 file.
  *
  *   --write   regenerate the three files
  *   --check   fail if any of them differs from what the declaration produces
@@ -26,12 +29,9 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { unversionManifestSpellings } from './v2-path-spellings.mjs';
-import { carriesUnspliceablePayload } from './v2-unspliceable.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DECL = join(ROOT, 'spec', 'v2', 'declaration.json');
-const V1 = join(ROOT, 'schemas', 'capabilities.schema.json');
 const OUT_SCHEMA = join(ROOT, 'schemas', 'v2', 'capabilities.schema.json');
 const OUT_PROFILES = join(ROOT, 'spec', 'v2', 'profiles.json');
 const OUT_ALIASES = join(ROOT, 'spec', 'v2', 'peer-dependency-aliases.json');
@@ -39,14 +39,9 @@ const EVIDENCE = join(ROOT, 'evidence', 'cross-repo-manifests.json');
 const VERSION_RE = '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$';
 
 const decl = JSON.parse(readFileSync(DECL, 'utf8'));
-const v1 = JSON.parse(readFileSync(V1, 'utf8'));
-
-// `/v1/<op>` → `/<op>` in seeded prose: the shared rule in v2-path-spellings.mjs
-// (manifest-scoped, versioning.md §1.2; errata 2026-09-10).
 
 function metadataSchema(key) {
-  // The v2 shapes of the metadata keys RFC 0169 §A.1a keeps. Anything not
-  // decided by a child yet copies the v1 property (seeded).
+  // The v2 shapes of the metadata keys RFC 0169 §A.1a keeps.
   switch (key) {
     case 'signingKeys': return {
       type: 'array',
@@ -79,305 +74,28 @@ function metadataSchema(key) {
         url: { type: 'string', format: 'uri', description: "The operator's site — A2A AgentProvider.url, MCP Implementation.websiteUrl. Informational." },
       },
     };
-    case 'conformance': {
-      // RFC 0168 §C.1: the seams are a versioned profile a host ADVERTISES; they are never a
-      // capability flag. `lib/seams.ts` gates every seam-driven scenario on this exact value,
-      // so the key has to exist in the closed root or the profile is unadvertisable.
-      const seeded = projectV1FacetSchema(v1.properties.conformance);
-      return { ...seeded, additionalProperties: false, properties: { ...seeded.properties,
-        seamsProfile: { const: 'openwop-conformance-seams-v2', description: 'RFC 0168 §C.1 — the host serves the conformance seams profile (api/seams-v2.yaml) at /conformance/seams/…. Absent means the seam-driven scenarios record `blocked`, never a pass.' } },
-        'x-openwop-seeded-from': 'v1' };
-    }
-    case 'observability': {
-      // `testSeams` is a test-seam flag in the capability namespace, which
-      // spec/v2/core/conformance.md §"The seams profile" forbids: seams are the
-      // profile `openwop-conformance-seams-v2` in the /conformance/seams/ path
-      // space. It is NOT removed at 2.x — MyndHyve's live v2 discovery document
-      // advertises it and the v2 root is additionalProperties:false, so deleting
-      // the property breaks a published closed record with no host change.
-      // Deprecated here rather than stamped on afterwards by
-      // generate-deprecation-annotations.mjs: both write this file, and these are
-      // the first discovery-field rows sourced to schemas/v2/, so that ordering
-      // had never been exercised and the two generators fought.
-      const seeded = projectV1FacetSchema(v1.properties.observability);
-      const ts = seeded.properties?.testSeams;
-      return { ...seeded, additionalProperties: false, properties: { ...seeded.properties,
-        ...(ts ? { testSeams: { ...ts, deprecated: true, 'x-openwop-remove-in': '3.0' } } : {}) },
-        'x-openwop-seeded-from': 'v1' };
-    }
     case 'extensions': return { type: 'object', additionalProperties: false, patternProperties: { [decl.extensionsKeyPattern]: { type: 'object', additionalProperties: true, description: 'A vendor/host extension record; its shape is the org\'s, declared as open on purpose (RFC 0169 §A.4).' } }, description: 'RFC 0169 §A.4 — one key for every vendor/host extension, <org>.<name>; reserved orgs: ' + decl.reservedOrgs.join(', ') + '.' };
     default: {
-      const p = v1.properties[key];
-      if (!p) throw new Error(`metadata key ${key} has no v1 property to seed from`);
-      const seeded = projectV1FacetSchema(p);
-      if (seeded.type === 'object' && seeded.additionalProperties === undefined) seeded.additionalProperties = false; // closed until the owning child decides (configurable → C.4's schema in P3-B)
-      return { ...seeded, 'x-openwop-seeded-from': 'v1' };
+      // Every other kept metadata key is hand-edited in spec/v2/facets/metadata/<key>.schema.json
+      // (seeded from the frozen v1 discovery schema once, at the RFC 0266 §C cut-over).
+      // Its `$comment` is the file's own provenance and is not copied into the root schema.
+      const p = join(ROOT, 'spec', 'v2', 'facets', 'metadata', `${key}.schema.json`);
+      if (!existsSync(p)) throw new Error(`metadata key ${key} has no schema: add spec/v2/facets/metadata/${key}.schema.json`);
+      const { $comment, ...schema } = JSON.parse(readFileSync(p, 'utf8'));
+      return schema;
     }
   }
-}
-
-// RFC 0192 §B — the `supported` ghost in seeded descriptions.
-//
-// v2 retired the `supported` flag but the prose came across untouched, so 26
-// facet descriptions still condition a MUST on a field the closed schema
-// forbids: "Hosts that advertise `supported: true` MUST include ...", "MUST be
-// `true` when `supported` is `true`". In v2 those MUSTs can never fire — a MUST
-// that cannot fire is a relaxed MUST.
-//
-// A bulk regex is not safe: the 26 say materially different things — opt-in,
-// conditional-required, cross-family reference, and one three-way combinatorial
-// explanation (`prompts.endpointsSupported`) that collapses entirely under
-// presence-semantics. Each is rewritten by hand, keyed by the exact v1 sentence
-// so a changed seed fails loudly rather than silently keeping the old text.
-const SUPPORTED_REWRITES = [
-  ['Hosts opt into the family via `supported: true` AND explicitly list the events they emit via `events[]`.',
-   'Hosts advertise the family by emitting the record AND explicitly list the events they emit via `events[]`.'],
-  ['Hosts that advertise `supported: true` MUST include', 'A host advertising this facet MUST include'],
-  ['Independent of `supported` — a host MAY advertise `supported: true, endpointsSupported: false`',
-   'Independent of the family record — a host MAY advertise the family with `endpointsSupported: false`'],
-  ['`supported: false, endpointsSupported: true`', 'the family omitted and `endpointsSupported: true`'],
-  ['MUST advertise `supported: true` and at least one entry', 'MUST advertise this facet and at least one entry'],
-  ['a host WITH onward hops advertising `supported: true` MUST also propagate',
-   'a host WITH onward hops that advertises this facet MUST also propagate'],
-  ['MUST advertise this sub-block with `supported: true` and a stable `hostId`',
-   'MUST advertise this sub-block with a stable `hostId`'],
-  ['MUST advertise this sub-block with `supported: true`.', 'MUST advertise this sub-block.'],
-  ['When `supported: true`, the host MAY replace older in-window turns',
-   'When this facet is present, the host MAY replace older in-window turns'],
-  ['(default when absent and supported:true)', '(the default when absent)'],
-  ['When `supported: true`, the host implements RFC 0003 `installAgents`',
-   'When this facet is present, the host implements RFC 0003 `installAgents`'],
-  ['REQUIRED when `supported: true` per RFC 0012 §A (enforced via the `if/then` clause).',
-   'REQUIRED when this facet is present, per RFC 0012 §A (enforced by this facet\'s `required`).'],
-  ['Only meaningful when `supported: true`.', 'Only meaningful when the family record is present.'],
-  ['MUST be set when `supported: true`.', 'MUST be set when this facet is present.'],
-  ['MUST be `true` when `supported` (the `http-client-ssrf-guard` invariant).',
-   'MUST be `true` when this facet is present (the `http-client-ssrf-guard` invariant).'],
-  ['When `supported: true`, the host\'s `POST', 'When this facet is present, the host\'s `POST'],
-  ['MUST be `true` when `supported` is `true` —', 'MUST be `true` when this facet is present —'],
-  ['MUST NOT claim `supported: true` while doing so', 'MUST NOT advertise this facet while doing so'],
-  // Cross-references to ANOTHER record's retired flag: "X.supported is true"
-  // is now simply "X is advertised".
-  ['`capabilities.secrets.supported` is also true', 'the `secrets` family is advertised'],
-  ['REQUIRED when `injectionBudget.supported` (enforced via the `if/then` clause).', 'REQUIRED when `injectionBudget` is advertised (enforced by that facet\'s `required`).'],
-  ['Distinct from `supported` only for hosts', 'Distinct from the family record only for hosts'],
-  ['Optional even when crossHostCausation.supported is true', 'Optional even when `crossHostCausation` is advertised'],
-  ['WITHOUT `summarization.supported`', 'WITHOUT `summarization`'],
-  ['A host advertising `host.agentRuntime: supported` is treated', 'A host advertising `agentRuntime` is treated'],
-  ['REQUIRES `agents.manifestRuntime.supported: true`', 'REQUIRES `agents.manifestRuntime`'],
-  ['REQUIRES `agents.roster.supported: true`', 'REQUIRES `agents.roster`'],
-  ['the host advertises `supported` but gates nothing', 'the host advertises the family but gates nothing'],
-  ['Stricter than the existing `capabilities.debugBundle.supported` advertised', 'Stricter than the existing `capabilities.debugBundle` advertised'],
-];
-const rewriteSupportedProse = (d) => {
-  let out = d;
-  for (const [from, to] of SUPPORTED_REWRITES) out = out.split(from).join(to);
-  for (const [from, to] of V1_PATH_REWRITES) out = out.split(from).join(to);
-  for (const [from, to] of RFC_0228_REWRITES) if (out.includes(from)) { out = out.split(from).join(to); RFC_0228_USED.add(from); }
-  for (const [from, to] of EXECUTION_MODEL_REWRITES) if (out.includes(from)) { out = out.split(from).join(to); RFC_0228_USED.add(from); }
-  return out;
-};
-
-// RFC 0228 §G — seeded descriptions that required a code the v2 registry does
-// not hold, or a `details.retryAfter` that errors.md §Retry timing forbids.
-// Keyed by the exact v1 sentence; a row that matches nothing fails the
-// generator, so a changed seed cannot silently keep the old text.
-const RFC_0228_REWRITES = [
-  // The five `agents` rows (modelClasses, deployment.channels, the deployment,
-  // roster and orgChart 404s) moved into spec/v2/facets/agents.schema.json,
-  // which the agents homing hand-decided from the rewritten seed.
-  ['When present, MUST equal both the `Retry-After` header and the `details.retryAfter` body field per production-profile.md.',
-   'When present, MUST equal the `Retry-After` header the host sends with `503 service_unavailable`.'],
-  // §H: an operation gated on an unadvertised family or facet answers `404 not_found`, not v1's 501.
-  ['False or absent = every `/prompts*` request returns `501 capability_not_provided`.',
-   'False or absent = every `/prompts*` request answers `404 not_found`.'],
-  ['When `false` or absent, those endpoints return 501.', 'When `false` or absent, those endpoints answer `404 not_found`.'],
-];
-// Suite 2.46.3 — multiAgent.executionModel descriptions that v2 prose overrules.
-// The levels are cumulative (execution.md §multiAgent), so "`version: 3`" read
-// as "exactly 3" let a level-5 host omit the level-3 sub-block. Level 2 fires a
-// `clarification` or `approval` interrupt, and the v2 interrupt `kind` is closed,
-// so the `x-host-` member and the RFC 0044 §C kind-mapping document describe
-// nothing a v2 host can do. The schema keeps the pattern (narrowing it is a
-// major change, COMPATIBILITY.md §2.4); `v2-multi-agent-advertisement` enforces
-// the prose. Same unused-row failure as RFC_0228_REWRITES.
-const EXECUTION_MODEL_REWRITES = [
-  ['Hosts advertising `version: 3` MUST advertise this sub-block with a stable `hostId`.',
-   'Hosts advertising `version` 3 or higher MUST advertise this sub-block with a non-empty, stable `hostId`.'],
-  ['Hosts advertising `version: 4` MUST advertise this sub-block.', 'Hosts advertising `version` 4 or higher MUST advertise this sub-block.'],
-  ['Hosts advertising `version: 4` MUST set this to `true`.', 'Hosts advertising `version` 4 or higher MUST set this to `true`.'],
-  ['vendor-extension kinds use the canonical host-extension namespace `^x-host-<host>-<kind>$` per `spec/v1/host-extensions.md` §"Canonical prefixes".',
-   'at v2 the value MUST be one of them (`execution.md` §multiAgent, level 2). The v2 interrupt `kind` is closed, so an `x-host-` value promises an interrupt the payload schema rejects; the pattern remains only so a v1-era document validates, and is removed at 3.0.'],
-  [' Hosts using vendor kinds MUST also publish a non-normative kind-mapping document per RFC 0044 §C.', ''],
-  // RFC 0266 §B.2 — the host-extension convention's v2 home is ids.schema.json's description.
-  ['per `spec/v1/host-extensions.md` §"Canonical prefixes"; the matching algorithm',
-   'per the host-extension convention (`ids.schema.json` description); the matching algorithm'],
-];
-// RFC 0255 — v1 seed prose naming a family the AI Envelope deletion removed.
-// Applied to EVERY description of the built schema (rewriteDeletedNames), not
-// only through projectV1FacetSchema, which never descends into
-// additionalProperties: the artifactTypes sentence sits under types.*.
-const RFC_0255_REWRITES = [
-  [' Decoupled from `schemaVersions`, which is a version DECLARATION only.', ''],
-];
-// RFC 0266 §B.2 — seeded descriptions that cited a v1 document as the home of a rule:
-// re-pointed to the v2 home, or the rule restated here (provenance note in the text).
-// Applied to every description (rewriteDeletedNames); an unused row fails the generator.
-const RFC_0266_REWRITES = [
-  ["Optional v1 hints about emitted spans/metrics/logs. See observability.md.",
-   "Optional v1 hints about emitted spans/metrics/logs. The span contract is telemetry.md."],
-  ["Workflow authors MAY override per-workflow via `metadata.complianceConfig.maskingMode`. See observability.md §Privacy classification.",
-   "Workflow authors MAY override per-workflow via `metadata.complianceConfig.maskingMode`. PRIVACY CLASSIFICATION (re-homed from v1 `observability.md` §\"Privacy classification\" by RFC 0266): a field is marked sensitive by `WorkflowVariable.sensitive`, `WorkflowNode.outputSensitivity`, a pack's `nodes[].outputs[<port>].sensitive` or `ChannelDeclaration.sensitive`, and `WorkflowMetadata.complianceClass` sets the run's tier. A server SHOULD default to `mask` for any field marked sensitive, SHOULD apply masking before the event reaches the durable event log, and SHOULD apply one mode consistently within a run so replays produce identical event logs. The spec does not detect PII: authors and pack maintainers MUST annotate fields."],
-  ["Discovery advertisement (capabilities-change-detection.md).",
-   "Discovery advertisement (capabilities.md §1; the scoped-view rules are `authScoped`'s)."],
-  ["Auth-scoped discovery advertisement (capabilities-change-detection.md §\"Scoped capability views\"). Hosts that return a different payload when called with Authorization than when called anonymously declare it here. The authenticated view MUST still satisfy the base capabilities.schema.json shape per the spec annex.",
-   "Auth-scoped discovery advertisement. Hosts that return a different payload when called with Authorization than when called anonymously declare it here. The public payload MUST NOT reveal private tenant features, secret names, provider keys, or premium-only capabilities that would disclose customer configuration. The authenticated view MUST still satisfy the base capabilities.schema.json shape; it MAY omit capabilities the caller cannot use and MAY include optional fields hidden from the public payload. Scoped discovery MUST NOT become an authorization oracle: a caller learns only about capabilities it is allowed to use. (Re-homed from v1 `capabilities-change-detection.md` §\"Scoped capability views\" by RFC 0266.)"],
-  ["at resolution chain layer 4 (`host-defaults`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\".",
-   "at resolution chain layer 4 (`host-defaults`) per host-services.md §`prompts`, Resolution."],
-  ["at resolution chain layer 2 (`agent-overrides` / `agent-library-default`) per `spec/v1/prompts.md` §\"Resolution chain (normative)\".",
-   "at resolution chain layer 2 (`agent-overrides` / `agent-library-default`) per host-services.md §`prompts`, Resolution."],
-  ["(`multi-agent-execution.md` §\"Per-iteration state inputs\" input 3 — the same transcript `transcriptWindow` bounds)",
-   "(the log tail execution.md §`multiAgent` names as a turn input — the same transcript `transcriptWindow` bounds)"],
-  ["whose `summaryRef` artifact replay reuses (never re-summarizes) per `multi-agent-execution.md` §\"Context economy (RFC 0111)\".",
-   "whose `summaryRef` artifact replay reuses (never re-summarizes; execution.md §`multiAgent`)."],
-  ["TTL expiry (`agent-memory.md §TTL`)",
-   "TTL expiry (host-services.md §`memory`, Size and expiry)"],
-  ["(`trigger-bridge.md` §C)",
-   "(webhooks.md §Inbound triggers)"],
-  ["Backpressure envelope advertisement (production-profile.md §Backpressure).",
-   "Backpressure envelope advertisement (conformance.md §Production profile)."],
-  ["Event-retention advertisement (production-profile.md §\"Event retention\").",
-   "Event-retention advertisement (conformance.md §Production profile)."],
-  ["Per production-profile.md §\"Event retention\", MUST be ≥ 604800",
-   "Per conformance.md §Production profile, MUST be ≥ 604800"],
-  ["Debug-bundle truncation advertisement (production-profile.md §\"Debug bundle behavior\"). Stricter than the existing `capabilities.debugBundle` advertised per debug-bundle.md — this block adds the production-profile MUSTs (truncation metadata, redaction).",
-   "Debug-bundle truncation advertisement (conformance.md §Production profile): the production-profile MUSTs for a debug bundle (`debug-bundle.schema.json`) — truncation metadata, redaction. v2 defines no debug-bundle operation; how a host serves a bundle is host-defined."],
-  ["per debug-bundle.md §\"Bundle size limits\" when caps are reached.",
-   "(`debug-bundle.schema.json`) when caps are reached."],
-  ["Host exposes `POST /v1/host/sample/test/debug-bundle/export` returning the same payload shape as `GET /v1/runs/{runId}/debug-bundle` per `spec/v1/debug-bundle.md`.",
-   "Host exposes a test-seam export returning a debug bundle (`debug-bundle.schema.json`); v2 defines no seam or operation path for it."],
-];
-function rewriteDeletedNames(node) {
-  if (Array.isArray(node)) return node.map(rewriteDeletedNames);
-  if (!node || typeof node !== 'object') return node;
-  const out = Object.fromEntries(Object.entries(node).map(([k, v]) => [k, rewriteDeletedNames(v)]));
-  if (typeof out.description === 'string') for (const [from, to] of RFC_0255_REWRITES) if (out.description.includes(from)) { out.description = out.description.split(from).join(to); RFC_0228_USED.add(from); }
-  if (typeof out.description === 'string') for (const [from, to] of RFC_0266_REWRITES) if (out.description.includes(from)) { out.description = out.description.split(from).join(to); RFC_0228_USED.add(from); }
-  return out;
-}
-const RFC_0228_USED = new Set();
-// Seeded descriptions that name a v1 route. v2 defines no protocol path for
-// portability export or import (spec/v2/core/portability.md §Routes); `GET
-// /export` and `POST /import?dryRun=true` were v1 conformance-seam spellings.
-// Keyed by the exact v1 sentence, like SUPPORTED_REWRITES above.
-const V1_PATH_REWRITES = [
-  ["Host can emit an export bundle for the caller's tenant/workspace via `GET /export`.",
-   "Host can emit an export bundle for the caller's tenant or workspace (portability.md)."],
-  ['Import supports a no-write plan preview (`POST /import?dryRun=true`). MUST be true if `import` is true.',
-   'Import supports a no-write plan preview. MUST be true if `import` is true.'],
-];
-
-// NOT the same contract as `stripSupportedFlag` in conformance/src/lib/v2-projection.ts,
-// and the two must not be merged. That one removes the retired `supported` flag and
-// nothing else. This one projects a seeded v1 facet SCHEMA into the closed v2 record's
-// facet schema: it also drops `tier`/`experimentalUntil` (absorbed by the record's
-// `status`/`until`), folds `supported`-gated if/then into unconditional `required`
-// (RFC 0192 §A), closes objects, and rewrites `supported` prose (RFC 0192 §B). It was
-// named `stripSupported` until 2.38.x; the shared name hid those differences.
-function projectV1FacetSchema(schema) {
-  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return schema;
-  const out = { ...schema };
-  if (typeof out.description === 'string') out.description = rewriteSupportedProse(unversionManifestSpellings(out.description));
-  if (out.properties) {
-    out.properties = Object.fromEntries(Object.entries(out.properties).filter(([k]) => !['supported', 'tier', 'experimentalUntil'].includes(k)).map(([k, v]) => [k, projectV1FacetSchema(v)]));
-  }
-  if (Array.isArray(out.required)) { out.required = out.required.filter((k) => !['supported', 'tier', 'experimentalUntil'].includes(k)); if (!out.required.length) delete out.required; }
-  // A conditional is deleted ONLY when it gates on `supported`, the field v2
-  // retired. The blanket delete this replaces was written on the premise that
-  // every v1 if/then gates on `supported`; half of them do not, and dropping
-  // those silently relaxed the schema. The worst was RFC 0132 §B.2 on
-  // `anonymousActor` — "writeEgressControls is REQUIRED and non-empty when
-  // bounded-write-egress is advertised … a control-less write/egress tier is
-  // the fail-open shape this RFC forbids". Proved by construction: before this
-  // fix, `{tiers:["bounded-write-egress"]}` with no controls VALIDATED at
-  // major 2. A guard whose whole purpose is to forbid a fail-open shape had
-  // been deleted by a comment's assumption.
-  //
-  // Also lost: fs `supported ⇒ sandboxRoot` (path-traversal root),
-  // aiProviders `realtimeVoice.synthesis ⇒ speechSynthesis` (RFC 0106 §A),
-  // memory.compaction `⇒ trigger`, memory.injectionBudget `⇒ tokenCounter` —
-  // the last two still DESCRIBED as "enforced via the if/then clause", naming a
-  // clause that was not there.
-  const gatesOnSupported = (node) => JSON.stringify(node ?? null).includes('"supported"');
-  // RFC 0192 §A — a `supported`-gated conditional is MIGRATED, not dropped.
-  // v1 said "if supported:true then these fields are required". Under
-  // presence-semantics the antecedent IS the facet being present, so the rule
-  // becomes an unconditional `required` on the facet itself. Deleting these
-  // silently relaxed memory.compaction ⇒ trigger and memory.injectionBudget ⇒
-  // tokenCounter — both of which are still DESCRIBED as "enforced via the
-  // if/then clause". Folding restores the obligation and makes the text true.
-  const foldSupportedGate = (node) => {
-    if (!node || typeof node !== 'object') return;
-    const req = node.then?.required;
-    if (gatesOnSupported(node.if) && Array.isArray(req)) {
-      const add = req.filter((k) => !['supported', 'tier', 'experimentalUntil'].includes(k));
-      if (add.length) out.required = [...new Set([...(out.required ?? []), ...add])];
-    }
-  };
-  for (const k of ['allOf', 'anyOf', 'oneOf']) {
-    if (!Array.isArray(out[k])) continue;
-    for (const c of out[k]) if (gatesOnSupported(c)) foldSupportedGate(c);
-    const kept = out[k].filter((c) => !gatesOnSupported(c)).map((c) => projectV1FacetSchema(c));
-    if (kept.length) out[k] = kept; else delete out[k];
-  }
-  if (gatesOnSupported(out.if)) { foldSupportedGate(out); delete out.if; delete out.then; delete out.else; }
-  else { for (const k of ['if', 'then', 'else']) if (out[k]) out[k] = projectV1FacetSchema(out[k]); }
-  // A conditional whose branches both project to nothing is a no-op. It happens when the
-  // antecedent and consequent name only fields this projection retires. multiAgent.executionModel's
-  // `tier: experimental ⇒ experimentalUntil` became `if: {properties: {}}, then: {}`.
-  const isEmpty = (n) => n === undefined || (n && typeof n === 'object' && !Array.isArray(n) && Object.keys(n).length === 0);
-  if (out.if && isEmpty(out.then) && isEmpty(out.else)) { delete out.if; delete out.then; delete out.else; }
-  if (out.type === 'object' && out.additionalProperties === undefined) out.additionalProperties = false;
-  return out;
-}
-
-function describeShape(p) {
-  if (Array.isArray(p.enum)) return `enum[${p.enum.join('|')}]`;
-  if (p.type === 'array') return `array<${p.items?.type ?? '?'}>`;
-  if (p.type === 'object') return `map<${p.additionalProperties?.type ?? 'object'}>`;
-  return String(p.type ?? 'unknown');
 }
 
 function familyRecord(f) {
-  // A child's hand-decided facet schema (spec/v2/facets/<key>.schema.json)
-  // replaces the seeded v1 copy: its `properties` are the facets and its
-  // `required` is merged with the record's own.
-  const overridePath = join(ROOT, 'spec', 'v2', 'facets', `${f.key}.schema.json`);
-  const override = existsSync(overridePath) ? JSON.parse(readFileSync(overridePath, 'utf8')) : null;
-  const v1p = v1.properties[f.key] ?? {};
-  const facets = override ?? projectV1FacetSchema(v1p);
-
-  // RFC 0193 §B — the silent payload drop.
-  //
-  // The record below splices `facets.properties` in as siblings of the uniform
-  // four. A v1 family that was an OBJECT therefore kept its payload (`limits`
-  // still carries clarificationRounds/schemaRounds/envelopesPerTurn). A v1
-  // family that was an ARRAY, a MAP, or an ENUM has no `.properties` at all, so
-  // its payload was dropped — silently, with the record still validating and a
-  // host still able to advertise it. That is how MyndHyve came to publish
-  // `supportedEnvelopes: {status:"stable", since:"1.0", witness:"..."}`: a
-  // stable claim to an envelope-kind catalog containing no catalog.
-  //
-  // The generator cannot invent the seat name — the v1 value was the whole
-  // property, so there is nothing to name it after. So it refuses, and the
-  // decision is made by hand in spec/v2/facets/<key>.schema.json.
-  if (!override && carriesUnspliceablePayload(facets)) {
-    throw new Error(
-      `generate-from-declaration FAILED — family \`${f.key}\` has a v1 payload the record cannot carry (RFC 0193 §B).\n` +
-      `  v1 shape: ${describeShape(facets)}. A v2 capability record is an object, so an array/map/enum value needs a NAMED SEAT,\n` +
-      `  and only a person can name it. Add spec/v2/facets/${f.key}.schema.json with the seat, and state in its owning doc what an\n` +
-      `  ABSENT seat means — absent MUST NOT be read as "unrestricted" for a catalog that gates a refusal.`);
-  }
+  // The family's facet schema is hand-edited in spec/v2/facets/<key>.schema.json:
+  // its `properties` are the facets, its `required` is merged with the record's
+  // own and its `allOf` is carried after the record's two status/until clauses.
+  // A family with no file carries the uniform four only. Every family that was
+  // seeded from the frozen v1 discovery schema got its file at the RFC 0266 §C
+  // cut-over; this generator reads no v1 file.
+  const facetsPath = join(ROOT, 'spec', 'v2', 'facets', `${f.key}.schema.json`);
+  const facets = existsSync(facetsPath) ? JSON.parse(readFileSync(facetsPath, 'utf8')) : null;
   const props = {
     status: { enum: ['stable', 'experimental', 'deprecated'] },
     since: {
@@ -388,29 +106,18 @@ function familyRecord(f) {
     },
     until: { type: 'string', pattern: '^((0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)|\\d{4}-\\d{2}-\\d{2})$' },
     witness: { enum: decl.witnessClasses },
-    ...(facets.properties ?? {}),
+    ...(facets?.properties ?? {}),
   };
   return {
-    // `facets.required` is the SEEDED family's own required[] (minus `supported`,
-    // which projectV1FacetSchema already removed). Dropping it lost a non-`supported`
-    // required field on eight families — anonymousActor.tiers, dataResidency.regions,
-    // content.{baseLocale,supportedLocales}, limits.{clarificationRounds,schemaRounds,
-    // envelopesPerTurn}, nondeterminismPolicy.declared (a floor predicate),
-    // envelopeContracts.advertised, connections.packsSupported, a2a.agentCardUrl.
-    type: 'object', additionalProperties: false, required: [...new Set(['status', 'since', 'witness', ...(override?.required ?? facets.required ?? [])])],
+    type: 'object', additionalProperties: false, required: [...new Set(['status', 'since', 'witness', ...(facets?.required ?? [])])],
     properties: props,
-    // The two status/until clauses are INJECTED; the seeded family's own
-    // surviving conditionals are carried alongside them. Overwriting `allOf`
-    // here is what actually dropped RFC 0132 §B.2 on anonymousActor — even once
-    // projectV1FacetSchema stopped deleting it, this assignment threw it away again.
     allOf: [
       { if: { properties: { status: { const: 'stable' } } }, then: { not: { required: ['until'] } } },
       { if: { properties: { status: { enum: ['experimental', 'deprecated'] } } }, then: { required: ['until'] } },
-      ...(override?.allOf ?? facets.allOf ?? []),
-      ...(facets.if && !override ? [{ ...(facets.if ? { if: facets.if } : {}), ...(facets.then ? { then: facets.then } : {}), ...(facets.else ? { else: facets.else } : {}) }] : []),
+      ...(facets?.allOf ?? []),
     ],
     description: `${f.section} — witness: ${f.witness}; maturity ${f.maturity.technical}/${f.maturity.adoption}${f.owningRfc ? `; RFC ${f.owningRfc}` : ''}`,
-    ...(override ? { 'x-openwop-facets-from': `spec/v2/facets/${f.key}.schema.json` } : { 'x-openwop-seeded-from': v1.properties[f.key] ? 'v1' : 'declaration' }),
+    ...(facets ? { 'x-openwop-facets-from': `spec/v2/facets/${f.key}.schema.json` } : {}),
   };
 }
 
@@ -462,16 +169,12 @@ function buildAliases() {
   return { $comment: 'GENERATED (RFC 0177 §B.2) from the registry peer-dependency key inventory recorded in evidence/cross-repo-manifests.json — never from a sibling checkout. A row with unresolved:true is a key no declaration family or facet explains; check-declaration.mjs fails on it. A row with deletedFamily names a family a steward deletion removed (RFC 0255 §D); it fails only while currentUses, its count among each pack\'s newest non-yanked v2 version, is above 0.', generatedFrom: ['spec/v2/declaration.json', 'evidence/cross-repo-manifests.json#registryPeerDependencyKeys'], rows };
 }
 
-const outputs = [[OUT_SCHEMA, rewriteDeletedNames(buildSchema())], [OUT_PROFILES, buildProfiles()], [OUT_ALIASES, buildAliases()]];
-{
-  const unused = [...RFC_0228_REWRITES, ...EXECUTION_MODEL_REWRITES, ...RFC_0255_REWRITES, ...RFC_0266_REWRITES].filter(([from]) => !RFC_0228_USED.has(from));
-  if (unused.length) { console.error(`generate-from-declaration FAILED — ${unused.length} RFC 0228 or executionModel rewrite(s) matched no seeded description:\n  ${unused.map(([f]) => f.slice(0, 100)).join('\n  ')}`); process.exit(1); }
-}
+const outputs = [[OUT_SCHEMA, buildSchema()], [OUT_PROFILES, buildProfiles()], [OUT_ALIASES, buildAliases()]];
 const render = (o) => JSON.stringify(o, null, 2) + '\n';
 // RFC 0192 §C — the 27th occurrence cannot appear silently.
 //
-// The 26 stale descriptions were not a one-time cleanup: the v1 seed is still
-// the source, so any newly-seeded family arrives with the same idiom. This
+// The 26 stale descriptions were not a one-time cleanup: a facet file copied or
+// written in the v1 idiom arrives with the same `supported` wording. This
 // fails the GENERATOR — not a separate checker — because generate-deprecation-
 // annotations.mjs also writes this file, and 2.10.0 established that a
 // correction applied as a post-pass gets overwritten by whichever generator

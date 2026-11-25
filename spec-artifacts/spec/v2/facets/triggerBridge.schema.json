@@ -1,0 +1,138 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "subscriptionStates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "active",
+          "paused",
+          "failed",
+          "dead-lettered"
+        ]
+      },
+      "description": "The subscription states the host implements (the §B four-state vocabulary). Absent ⇒ at least `active` + `dead-lettered`."
+    },
+    "dedup": {
+      "type": "boolean",
+      "description": "`true` ⇒ the host de-duplicates inbound events by `dedupKey` within the retention window (§C-1; at-least-once becomes effectively-once)."
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The host's default delivery retry policy (§C-2).",
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Max delivery attempts before dead-lettering."
+        },
+        "backoff": {
+          "type": "string",
+          "enum": [
+            "none",
+            "fixed",
+            "exponential"
+          ],
+          "description": "Backoff strategy between attempts."
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "webhook",
+          "schedule",
+          "queue",
+          "email",
+          "form",
+          "stream",
+          "change"
+        ]
+      },
+      "description": "Which trigger sources bridge uniformly. A source listed here MUST have a registerable `TriggerSubscription` driven through the four-state machine AND emit the two `trigger.*` events for that source — the list MUST NOT over-claim a source the host has as a feature but does not wire as a durable trigger subscription. A consumer MUST tolerate any subset."
+    },
+    "ingestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "RFC 0099 §F.3 (additive). External-event ingestion advertisement — which of `sources[]` the host actually ingests from EXTERNALLY-originated events (`webhook`/`email`/`form`/`stream`/`change`), normalizing each to a `TriggerEvent` (`trigger-event.schema.json`) and starting a run. Absent ⇒ the host does NOT externally-ingest (today's behavior — schedule/queue only). A source in `externalSources[]` MUST actually accept an external event, normalize it, and start a run — over-claiming is a dishonest advertisement. A consumer MUST tolerate any subset.",
+      "properties": {
+        "externalSources": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "webhook",
+              "email",
+              "form",
+              "stream",
+              "change"
+            ]
+          },
+          "description": "Which of `sources[]` are EXTERNALLY ingested per RFC 0099 (`stream`/`change` per RFC 0127). The honesty gate — each MUST normalize to a `TriggerEvent` and start a run."
+        },
+        "maxBodyBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Inbound body cap (webhook body / email / form), reusing the RFC 0076 §B response-cap discipline."
+        },
+        "verification": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "webhook-signature",
+              "email-dmarc",
+              "form-origin"
+            ]
+          },
+          "description": "Which source-authenticity checks the host performs. An advertised check MUST actually be performed (RFC 0099 §F.3 / UQ1)."
+        },
+        "inboundSigning": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "standard-webhooks-1"
+            ]
+          },
+          "description": "RFC 0230. Sender-facing ingest schemes this host implements for `webhook` subscriptions. `standard-webhooks-1`: a sender signs the raw body with the Standard Webhooks headers under the secret returned once at registration; the signature authenticates it (no OpenWOP credential on `ingestUrl`), `webhook-id` is the inbound identity dedup keys on, and the ingest answers 202 delivered / 200 duplicate / 401 signature_invalid / 409 subscription_not_active."
+        },
+        "registrationEndpoint": {
+          "type": "boolean",
+          "description": "`true` ⇒ the host serves `POST /trigger-subscriptions` (RFC 0099 §F.2) for portable external-event subscription creation."
+        }
+      }
+    },
+    "deadLetter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "retentionDays",
+        "maxPageSize"
+      ],
+      "description": "RFC 0232 §A (additive). The trigger DELIVERY dead-letter sink, advertised only by a host that serves `GET /trigger-subscriptions/{subscriptionId}/dead-letters` (`listTriggerDeadLetters`). A dead-lettered trigger delivery started no run, so it is on no run's log; this read is where the host's content-free record of it is visible (webhooks.md §Inbound triggers). **Distinct from the top-level `deadLetter` family (RFC 0053), which is the RUN sink**, and from `webhooks.deadLetter` (RFC 0188), which holds OUTBOUND deliveries.",
+      "properties": {
+        "retentionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a dead-lettered delivery stays readable. Observable: a record's `expiresAt − deadLetteredAt` matches it."
+        },
+        "maxPageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "The ceiling the host clamps `limit` to."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "store": {
+      "type": "boolean",
+      "description": "`true` ⇒ the host persists artifacts of registered types AND emits `artifact.created`. Advertising this is a commitment to emit; RFC 0142 leg B is the witness."
+    },
+    "render": {
+      "type": "boolean",
+      "description": "Advisory — the spec defines no rendering surface. A host advertising `false` for a type it can `store` MUST still accept and store the artifact and MUST NOT fail the run for lack of a renderer (the store-without-render negotiation guarantee)."
+    },
+    "export": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Export-format identifiers the host can materialize, drawn from declared `exportFormats`. Advisory."
+    },
+    "types": {
+      "type": "object",
+      "description": "RFC 0075 per-type facets, keyed by `artifactTypeId`. Each entry overrides the global object for that type; the global object is the fallback for any type not listed (absent ⇒ host-global semantics; any facet absent ⇒ the global default — additive).",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "validated": {
+            "type": "boolean",
+            "description": "The runtime validation guarantee — `true` ⇒ the host validates this type before emit, so emits `registered: true`."
+          },
+          "validation": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "description": "Mirrors `ArtifactType.validation`, surfacing schema strictness in discovery so a consumer needn't fetch the schema. Default `\"open\"` per `COMPATIBILITY.md` §2.1."
+          },
+          "schemaVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "registrationSource": {
+            "type": "string",
+            "enum": [
+              "pack",
+              "host"
+            ],
+            "description": "RFC 0145. Provenance of this registered type: `pack` (an installed artifact-type pack backs it) or `host` (host-native, validated against a host-known schema with no pack). Mirrors `artifact.created.registrationSource` and MUST match what the host would emit for this type — the two surfaces MUST NOT disagree. OPTIONAL; absent ⇒ unspecified provenance, NOT a default of `pack`. Discloses which §\"Schema distribution\" regime applies: serving the canonical schema URL is a MUST for host-registered (no-pack) types and only a SHOULD for pack-backed ones, and nothing else in the advert reveals which. A host MUST NOT infer this from the identifier's shape — `vendor.*` is a registry namespace, not an installation claim."
+          },
+          "store": {
+            "type": "boolean"
+          },
+          "render": {
+            "type": "boolean"
+          },
+          "export": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "maxKeyBytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maxValueBytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maxTtlSeconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "atomicIncrement": {
+      "type": "boolean"
+    },
+    "compareAndSwap": {
+      "type": "boolean"
+    }
+  }
+}

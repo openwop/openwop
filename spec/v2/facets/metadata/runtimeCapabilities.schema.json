@@ -1,0 +1,10 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "type": "array",
+  "items": {
+    "type": "string",
+    "minLength": 1
+  },
+  "uniqueItems": true,
+  "description": "Optional v1 host-advertised opaque capability ids that NodeModules may declare in `NodeModule.requires`. Naming convention: dotted, domain-scoped (`chat.sendPrompt`, `canvas.write`, `secrets.byok`). Provider value shapes are documented per-capability alongside consumers, NOT in the protocol package — the protocol owns the *check*, not domain provider contracts. A client that submits a workflow whose nodes declare a `requires` entry SHOULD first verify the host advertises that capability; a host that lacks a capability MUST refuse to dispatch nodes that declare it, terminating the run with `RunSnapshot.error.code = 'capability_not_provided'`. See `capabilities.md` §\"Runtime capabilities\"."
+}

@@ -99,6 +99,5 @@
       "maxLength": 500,
       "description": "MAY. One-line summary for catalog / console surfaces."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

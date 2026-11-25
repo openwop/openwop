@@ -1,3 +1,7 @@
+## [2.49.13] — 2026-11-25 — No scenario change
+
+- No scenario change. The vendored v2 schemas and API documents lose their v1-derivation markers and headers (RFC 0266 §C).
+
 ## [2.49.12] — 2026-11-25 — No scenario change
 
 - No scenario change. Schema descriptions now carry the rules RFC 0266 moved out of frozen v1; the suite's vendored schemas change accordingly.

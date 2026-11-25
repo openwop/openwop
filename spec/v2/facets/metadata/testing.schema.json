@@ -1,0 +1,44 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "type": "object",
+  "description": "Testing-mode capabilities advertised to clients (closes F1). Lets conformance suites + dev clients discover which mock providers the server supports and which API-key prefix denotes test keys (since mock providers are test-keys-only).",
+  "properties": {
+    "mockProviders": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "Mock-provider IDs this server recognizes via `RunOptions.configurable.mockProvider.id`. Servers claiming OpenWOP v1.0 conformance MUST include `stream-text`. Other canonical providers (`tool-calls`, `error`, `usage-only`) are recommended. Implementations MAY add their own (vendor-prefixed)."
+    },
+    "testKeyPrefix": {
+      "type": "string",
+      "description": "API-key prefix that marks a key as test-mode. Mock providers and other test-only surfaces gate on this prefix.",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "forceEngineVersionRange": {
+      "type": "object",
+      "description": "Range of engine versions the server can be forced into via the `X-Force-Engine-Version` request header (test-keys-only). Used by the conformance suite to verify forward-compat fold-best-effort across the version-negotiation matrix. Closes F5.",
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Lowest forceable engine version. Typically (current - 1) so back-compat is exercised."
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Highest forceable engine version. Typically (current + 1) so forward-compat is exercised."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

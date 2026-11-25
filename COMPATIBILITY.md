@@ -183,7 +183,7 @@ v2 followed this path. The v1→v2 migration guide is [`docs/migration/v1-to-v2.
 RFC 0234 applied leg (c): **v1 reached end of support on 2026-10-04.** `evidence/v1-end-of-support.json` records the computed state. What the date means:
 
 - **A host MAY drop v1** from `protocolVersions[]`. It is not required to do so on that day, and a host that keeps serving v1 remains conformant for its v2 surface. Dropping v1 retires the whole `/v1` path space at once (`versioning.md` §5).
-- **The v1 tree is frozen as history.** `spec/v1/`, the flat `schemas/*.schema.json`, and `api/openapi.yaml` / `api/asyncapi.yaml` are not edited for v1's sake. (`api/openapi.yaml` and `api/asyncapi.yaml` stay in use as the source `scripts/derive-v2-api.py` reads.)
+- **The v1 tree is frozen as history.** `spec/v1/`, the flat `schemas/*.schema.json`, and `api/openapi.yaml` / `api/asyncapi.yaml` are not edited for v1's sake. Since RFC 0266 §C no generator reads them: `api/v2/` is its own source.
 - **The last 1.x packages stay installable** for 12 months from the v2.0.0 publish (`overview.md` §"Old-major retention floors"; `spec/v2/retention-floors.json`), so a consumer pinned to 1.x can still rebuild.
 
 ## 6. Pinning recommendations

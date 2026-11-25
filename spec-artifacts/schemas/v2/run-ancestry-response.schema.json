@@ -63,6 +63,5 @@
       ],
       "description": "The run's immediate parent — `null` for top-level runs (not dispatched from any other run); otherwise the parent's identifiers + composition mechanism."
     }
-  },
-  "x-openwop-seeded-from": "v1"
+  }
 }

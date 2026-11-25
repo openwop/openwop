@@ -7,23 +7,23 @@
 
 | Surface | Current value | Source |
 |---|---:|---|
-| Spec prose documents | 61 | `spec/v1/*.md` |
-| JSON Schemas | 82 | `schemas/*.schema.json` |
-| OpenAPI operations | 59 | `api/openapi.yaml` |
-| AsyncAPI version | 3.1.0 | `api/asyncapi.yaml` |
+| Spec prose documents | 31 | `spec/v2/core/*.md` |
+| JSON Schemas | 97 | `schemas/v2/*.schema.json` |
+| OpenAPI operations | 69 | `api/v2/openapi.yaml` |
+| AsyncAPI version | 3.1.0 | `api/v2/asyncapi.yaml` |
 | Conformance scenario files | 674 | `conformance/src/scenarios/*.test.ts` |
 | RFCs tracked | 262 | `RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template |
 
 ## Artifact Versions
 
-> Per `PUBLISHING.md`, these artifacts version on independent cadences. The spec-corpus (root) version bumps only on a coordinated release, so it intentionally trails the per-artifact patch streams. This generated table is the single reconciled readout — read it instead of any one `package.json` in isolation.
+> Per `PUBLISHING.md`, these artifacts version on independent cadences. The spec-corpus (root) version names the corpus major, so it intentionally differs from the per-artifact patch streams. This generated table is the single reconciled readout — read it instead of any one `package.json` in isolation.
 
 | Artifact | Version | Source | Cadence |
 |---|---|---|---|
-| Spec corpus (root) | 1.1.0 | `package.json` | bumps only on a coordinated spec release |
-| Conformance suite `@openwop/openwop-conformance` | 2.49.12 | `conformance/package.json` | minor on scenario add/remove |
-| OpenAPI `info.version` | 1.1.0 | `api/openapi.yaml` | hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 sectionB #14) |
-| AsyncAPI `info.version` | 1.1.0 | `api/asyncapi.yaml` | as above |
+| Spec corpus (root) | 2.0.0 | `package.json` | names the corpus major (RFC 0266 sectionC.2); changes only at a new major |
+| Conformance suite `@openwop/openwop-conformance` | 2.49.13 | `conformance/package.json` | minor on scenario add/remove |
+| OpenAPI `info.version` | 2.49.13 | `api/v2/openapi.yaml` | the corpus tag (`spec/v2/release.json`, RFC 0172 sectionB #14) |
+| AsyncAPI `info.version` | 2.49.13 | `api/v2/asyncapi.yaml` | as above |
 | TypeScript SDK `@openwop/openwop` (2.x, current) | 2.10.0 | openwop-sdks `sdk/typescript-v2/package.json` (via `evidence/cross-repo-manifests.json`) | v2-only; npm `latest` |
 | Python SDK `openwop-client` (2.x, current) | 2.10.0 | openwop-sdks `sdk/python-v2/pyproject.toml` | v2-only; `openwop-client>=2,<3` |
 | Go SDK `github.com/openwop/openwop-sdks/go/v2` (2.x, current) | 2.10.0 | openwop-sdks `go/v2/CHANGELOG.md` head (tag-versioned `go/v2.Y.Z`; no version file) | v2-only |
@@ -64,7 +64,7 @@
 
 ## OpenAPI Operations
 
-`bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createContentPage`, `createPromptTemplate`, `createRun`, `createTriggerSubscription`, `deleteContentPage`, `deletePromptTemplate`, `deleteTestPackVersion`, `deleteWorkspaceFile`, `diffRun`, `forkRun`, `getA2ATaskState`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getContentPage`, `getContentSettings`, `getEvalSummary`, `getOpenApiSpec`, `getPromptTemplate`, `getRun`, `getRunAncestry`, `getTestPackSignature`, `getTestPackTarball`, `getTool`, `getWorkflow`, `getWorkspaceFile`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listContentPages`, `listPromptTemplates`, `listTools`, `listTriggerDeadLetters`, `listWorkspaceFiles`, `pauseRun`, `pollRunEvents`, `putContentSection`, `putContentSettings`, `putTestPackTarball`, `putWorkspaceFile`, `registerWebhook`, `renderPromptTemplate`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `rotateWebhookSecret`, `streamRunEvents`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
+`applyProposal`, `archiveProposal`, `bulkCancelRuns`, `cancelRun`, `createAnnotation`, `createContentPage`, `createPromptTemplate`, `createRun`, `createTriggerSubscription`, `deleteContentPage`, `deletePromptTemplate`, `diffRun`, `dispatchUiPluginRequest`, `emitTestHostEvent`, `forkRun`, `getAgent`, `getAgentOrgChart`, `getAgentOrgChartDepartment`, `getAgentRosterEntry`, `getArtifact`, `getCapabilities`, `getContentPage`, `getContentSettings`, `getEffectSeamManifest`, `getEvalSummary`, `getInstalledPack`, `getOpenApiSpec`, `getPromptTemplate`, `getProposal`, `getRun`, `getRunAncestry`, `getRunCompensation`, `getRunEffects`, `getTool`, `getUiPluginFrame`, `getWorkflow`, `inspectInterruptByToken`, `listAgentDeployments`, `listAgentRoster`, `listAgents`, `listAnnotations`, `listConnectionProviders`, `listContentPages`, `listPromptTemplates`, `listProposals`, `listRuns`, `listTools`, `listTriggerDeadLetters`, `listWebhookDeadLetters`, `pauseRun`, `pollRunEvents`, `putContentSection`, `putContentSettings`, `registerWebhook`, `rejectProposal`, `renderPromptTemplate`, `resolveConnectionProvider`, `resolveInterruptByRun`, `resolveInterruptByToken`, `resumeRun`, `reviseProposal`, `rotateWebhookSecret`, `streamHostEvents`, `streamRunEvents`, `submitProposal`, `transitionAgentDeployment`, `unregisterWebhook`, `updatePromptTemplate`, `verifyAuditLog`
 
 ## RFC Status
 

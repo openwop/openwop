@@ -113,8 +113,7 @@
           "x-openwop-remove-in": "3.0"
         }
       },
-      "additionalProperties": false,
-      "x-openwop-seeded-from": "v1"
+      "additionalProperties": false
     },
     "minClientVersion": {
       "type": "string",
@@ -128,8 +127,7 @@
         "minLength": 1
       },
       "uniqueItems": true,
-      "description": "Optional v1 host-advertised opaque capability ids that NodeModules may declare in `NodeModule.requires`. Naming convention: dotted, domain-scoped (`chat.sendPrompt`, `canvas.write`, `secrets.byok`). Provider value shapes are documented per-capability alongside consumers, NOT in the protocol package — the protocol owns the *check*, not domain provider contracts. A client that submits a workflow whose nodes declare a `requires` entry SHOULD first verify the host advertises that capability; a host that lacks a capability MUST refuse to dispatch nodes that declare it, terminating the run with `RunSnapshot.error.code = 'capability_not_provided'`. See `capabilities.md` §\"Runtime capabilities\".",
-      "x-openwop-seeded-from": "v1"
+      "description": "Optional v1 host-advertised opaque capability ids that NodeModules may declare in `NodeModule.requires`. Naming convention: dotted, domain-scoped (`chat.sendPrompt`, `canvas.write`, `secrets.byok`). Provider value shapes are documented per-capability alongside consumers, NOT in the protocol package — the protocol owns the *check*, not domain provider contracts. A client that submits a workflow whose nodes declare a `requires` entry SHOULD first verify the host advertises that capability; a host that lacks a capability MUST refuse to dispatch nodes that declare it, terminating the run with `RunSnapshot.error.code = 'capability_not_provided'`. See `capabilities.md` §\"Runtime capabilities\"."
     },
     "testing": {
       "type": "object",
@@ -172,8 +170,7 @@
           "additionalProperties": false
         }
       },
-      "additionalProperties": true,
-      "x-openwop-seeded-from": "v1"
+      "additionalProperties": true
     },
     "conformance": {
       "type": "object",
@@ -193,8 +190,7 @@
           "description": "RFC 0168 §C.1 — the host serves the conformance seams profile (api/seams-v2.yaml) at /conformance/seams/…. Absent means the seam-driven scenarios record `blocked`, never a pass."
         }
       },
-      "additionalProperties": false,
-      "x-openwop-seeded-from": "v1"
+      "additionalProperties": false
     },
     "fixtures": {
       "type": "array",
@@ -203,8 +199,7 @@
         "minLength": 1
       },
       "uniqueItems": true,
-      "description": "Optional v1 fixture workflow IDs the host has seeded. The conformance suite uses this list to decide which fixture-dependent scenarios run vs. skip. Each ID matches a stub at `node_modules/@openwop/openwop-conformance/fixtures/{id}.json`. Hosts MAY advertise vendor-prefixed IDs; clients MUST tolerate unknown IDs. Empty array or absent means the host advertises no fixtures.",
-      "x-openwop-seeded-from": "v1"
+      "description": "Optional v1 fixture workflow IDs the host has seeded. The conformance suite uses this list to decide which fixture-dependent scenarios run vs. skip. Each ID matches a stub at `node_modules/@openwop/openwop-conformance/fixtures/{id}.json`. Hosts MAY advertise vendor-prefixed IDs; clients MUST tolerate unknown IDs. Empty array or absent means the host advertises no fixtures."
     },
     "compliance": {
       "type": "object",
@@ -236,8 +231,7 @@
           "description": "Compliance classes this server applies special handling for. A server MAY accept all five classes but only enforce stricter retention on a subset; this field declares the operational reality so workflow authors can choose a server appropriately."
         }
       },
-      "additionalProperties": true,
-      "x-openwop-seeded-from": "v1"
+      "additionalProperties": true
     },
     "signingKeys": {
       "type": "array",
@@ -303,8 +297,7 @@
           "additionalProperties": false
         }
       },
-      "additionalProperties": false,
-      "x-openwop-seeded-from": "v1"
+      "additionalProperties": false
     },
     "preferredVersion": {
       "type": "string",
@@ -599,7 +592,7 @@
         }
       ],
       "description": "core/capabilities.md#prompts — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0027",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/prompts.schema.json"
     },
     "nodePackRuntimes": {
       "type": "object",
@@ -710,7 +703,7 @@
         }
       ],
       "description": "core/capabilities.md#nodePackRuntimes — witness: claims-check; maturity experimental/none; RFC 0008",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/nodePackRuntimes.schema.json"
     },
     "secrets": {
       "type": "object",
@@ -835,7 +828,7 @@
         }
       ],
       "description": "core/capabilities.md#secrets — witness: witnessable-gated; maturity experimental/multi-witness",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/secrets.schema.json"
     },
     "connections": {
       "type": "object",
@@ -1002,7 +995,7 @@
         }
       ],
       "description": "core/capabilities.md#selfHostedRunner — witness: witnessable-gated; maturity experimental/single-witness; RFC 0122",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/selfHostedRunner.schema.json"
     },
     "purposePropagation": {
       "type": "object",
@@ -1079,7 +1072,7 @@
         }
       ],
       "description": "core/capabilities.md#purposePropagation — witness: witnessable-gated; maturity experimental/single-witness; RFC 0128",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/purposePropagation.schema.json"
     },
     "dataResidency": {
       "type": "object",
@@ -1162,7 +1155,7 @@
         }
       ],
       "description": "core/capabilities.md#dataResidency — witness: witnessable-gated; maturity experimental/single-witness; RFC 0129",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/dataResidency.schema.json"
     },
     "anonymousActor": {
       "type": "object",
@@ -1291,7 +1284,7 @@
         }
       ],
       "description": "core/capabilities.md#anonymousActor — witness: seam-gated; maturity experimental/none; RFC 0132",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/anonymousActor.schema.json"
     },
     "credentials": {
       "type": "object",
@@ -1393,7 +1386,7 @@
         }
       ],
       "description": "core/capabilities.md#credentials — witness: witnessable-gated; maturity experimental/single-witness; RFC 0046",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/credentials.schema.json"
     },
     "feedback": {
       "type": "object",
@@ -1493,7 +1486,7 @@
         }
       ],
       "description": "core/capabilities.md#feedback — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0056",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/feedback.schema.json"
     },
     "replay": {
       "type": "object",
@@ -1841,7 +1834,7 @@
         }
       ],
       "description": "core/capabilities.md#authorization — witness: witnessable-gated; maturity experimental/single-witness; RFC 0049",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/authorization.schema.json"
     },
     "multiPartyConversation": {
       "type": "object",
@@ -1919,7 +1912,7 @@
         }
       ],
       "description": "core/capabilities.md#multiPartyConversation — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0101",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/multiPartyConversation.schema.json"
     },
     "conversationTurnModelProvenance": {
       "type": "object",
@@ -1991,8 +1984,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#conversationTurnModelProvenance — witness: witnessable-gated; maturity experimental/single-witness; RFC 0109",
-      "x-openwop-seeded-from": "v1"
+      "description": "core/capabilities.md#conversationTurnModelProvenance — witness: witnessable-gated; maturity experimental/single-witness; RFC 0109"
     },
     "channelPresence": {
       "type": "object",
@@ -2064,8 +2056,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#channelPresence — witness: witnessable-gated; maturity experimental/none; RFC 0110",
-      "x-openwop-seeded-from": "v1"
+      "description": "core/capabilities.md#channelPresence — witness: witnessable-gated; maturity experimental/none; RFC 0110"
     },
     "multiAgent": {
       "type": "object",
@@ -2295,7 +2286,7 @@
         }
       ],
       "description": "core/capabilities.md#multiAgent — witness: claims-check; maturity experimental/multi-witness; RFC 0037",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/multiAgent.schema.json"
     },
     "modelCapabilities": {
       "type": "object",
@@ -2381,7 +2372,7 @@
         }
       ],
       "description": "core/capabilities.md#modelCapabilities — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0031",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/modelCapabilities.schema.json"
     },
     "providerUsage": {
       "type": "object",
@@ -2463,7 +2454,7 @@
         }
       ],
       "description": "core/capabilities.md#providerUsage — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0026",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/providerUsage.schema.json"
     },
     "aiProviders": {
       "type": "object",
@@ -3479,7 +3470,7 @@
         }
       ],
       "description": "core/capabilities.md#memory — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0004",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/memory.schema.json"
     },
     "conversationPrimitive": {
       "type": "object",
@@ -3551,8 +3542,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#conversationPrimitive — witness: claims-check; maturity experimental/multi-witness; RFC 0005",
-      "x-openwop-seeded-from": "v1"
+      "description": "core/capabilities.md#conversationPrimitive — witness: claims-check; maturity experimental/multi-witness; RFC 0005"
     },
     "subWorkflow": {
       "type": "object",
@@ -3630,7 +3620,7 @@
         }
       ],
       "description": "core/capabilities.md#subWorkflow — witness: claims-check; maturity experimental/multi-witness; RFC 0007",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/subWorkflow.schema.json"
     },
     "fs": {
       "type": "object",
@@ -3755,7 +3745,7 @@
         }
       ],
       "description": "core/capabilities.md#fs — witness: witnessable-gated; maturity experimental/none; RFC 0014",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/fs.schema.json"
     },
     "kvStorage": {
       "type": "object",
@@ -3846,7 +3836,7 @@
         }
       ],
       "description": "core/capabilities.md#kvStorage — witness: witnessable-gated; maturity experimental/single-witness; RFC 0015",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/kvStorage.schema.json"
     },
     "tableStorage": {
       "type": "object",
@@ -3933,7 +3923,7 @@
         }
       ],
       "description": "core/capabilities.md#tableStorage — witness: witnessable-gated; maturity experimental/single-witness; RFC 0016",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/tableStorage.schema.json"
     },
     "queueBus": {
       "type": "object",
@@ -4035,7 +4025,7 @@
         }
       ],
       "description": "core/capabilities.md#queueBus — witness: witnessable-gated; maturity experimental/none; RFC 0017",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/queueBus.schema.json"
     },
     "scheduling": {
       "type": "object",
@@ -4124,7 +4114,7 @@
         }
       ],
       "description": "core/capabilities.md#scheduling — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0052",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/scheduling.schema.json"
     },
     "heartbeat": {
       "type": "object",
@@ -4409,7 +4399,7 @@
         }
       ],
       "description": "core/capabilities.md#toolHooks — witness: witnessable-gated; maturity experimental/none; RFC 0064",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/toolHooks.schema.json"
     },
     "toolCatalog": {
       "type": "object",
@@ -4505,7 +4495,7 @@
         }
       ],
       "description": "core/capabilities.md#toolCatalog — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0078",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/toolCatalog.schema.json"
     },
     "httpClient": {
       "type": "object",
@@ -4626,7 +4616,7 @@
         }
       ],
       "description": "core/capabilities.md#httpClient — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0076",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/httpClient.schema.json"
     },
     "artifactTypes": {
       "type": "object",
@@ -4760,7 +4750,7 @@
         }
       ],
       "description": "core/capabilities.md#artifactTypes — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0071",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/artifactTypes.schema.json"
     },
     "forms": {
       "type": "object",
@@ -4837,7 +4827,7 @@
         }
       ],
       "description": "core/capabilities.md#forms — witness: claims-check; maturity experimental/single-witness; RFC 0137",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/forms.schema.json"
     },
     "promptLibrary": {
       "type": "object",
@@ -4909,8 +4899,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#promptLibrary — witness: claims-check; maturity experimental/none; RFC 0144",
-      "x-openwop-seeded-from": "v1"
+      "description": "core/capabilities.md#promptLibrary — witness: claims-check; maturity experimental/none; RFC 0144"
     },
     "agentRuntime": {
       "type": "object",
@@ -4982,8 +4971,7 @@
           }
         }
       ],
-      "description": "core/capabilities.md#agentRuntime — witness: claims-check; maturity experimental/none; RFC 0144",
-      "x-openwop-seeded-from": "v1"
+      "description": "core/capabilities.md#agentRuntime — witness: claims-check; maturity experimental/none; RFC 0144"
     },
     "deadLetter": {
       "type": "object",
@@ -5061,7 +5049,7 @@
         }
       ],
       "description": "core/capabilities.md#deadLetter — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0053",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/deadLetter.schema.json"
     },
     "webhooks": {
       "type": "object",
@@ -5422,7 +5410,7 @@
         }
       ],
       "description": "core/capabilities.md#triggerBridge — witness: witnessable-gated; maturity experimental/single-witness; RFC 0083",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/triggerBridge.schema.json"
     },
     "a2a": {
       "type": "object",
@@ -5669,7 +5657,7 @@
         }
       ],
       "description": "core/capabilities.md#budget — witness: witnessable-gated; maturity experimental/single-witness; RFC 0084",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/budget.schema.json"
     },
     "nondeterminismPolicy": {
       "type": "object",
@@ -5849,7 +5837,7 @@
         }
       ],
       "description": "core/capabilities.md#workspace — witness: witnessable-gated; maturity experimental/single-witness; RFC 0059",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/workspace.schema.json"
     },
     "uiPlugins": {
       "type": "object",
@@ -6079,7 +6067,7 @@
         }
       ],
       "description": "core/capabilities.md#sql — witness: witnessable-gated; maturity experimental/single-witness; RFC 0018",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/sql.schema.json"
     },
     "nosql": {
       "type": "object",
@@ -6167,7 +6155,7 @@
         }
       ],
       "description": "core/capabilities.md#nosql — witness: claims-check; maturity experimental/none; RFC 0018",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/nosql.schema.json"
     },
     "vectorStore": {
       "type": "object",
@@ -6261,7 +6249,7 @@
         }
       ],
       "description": "core/capabilities.md#vectorStore — witness: witnessable-gated; maturity experimental/single-witness; RFC 0018",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/vectorStore.schema.json"
     },
     "searchIndex": {
       "type": "object",
@@ -6350,7 +6338,7 @@
         }
       ],
       "description": "core/capabilities.md#searchIndex — witness: witnessable-gated; maturity experimental/none; RFC 0018",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/searchIndex.schema.json"
     },
     "blobStorage": {
       "type": "object",
@@ -6433,7 +6421,7 @@
         }
       ],
       "description": "core/capabilities.md#blobStorage — witness: witnessable-gated; maturity experimental/single-witness; RFC 0019",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/blobStorage.schema.json"
     },
     "cache": {
       "type": "object",
@@ -6514,7 +6502,7 @@
         }
       ],
       "description": "core/capabilities.md#cache — witness: witnessable-gated; maturity experimental/single-witness; RFC 0019",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/cache.schema.json"
     },
     "workflowChainPacks": {
       "type": "object",
@@ -7049,7 +7037,7 @@
         }
       ],
       "description": "core/capabilities.md#compensation — witness: seam-gated; maturity experimental/multi-witness; RFC 0151",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/compensation.schema.json"
     },
     "idempotency": {
       "type": "object",
@@ -7246,7 +7234,7 @@
         }
       ],
       "description": "core/capabilities.md#eventLog — witness: claims-check; maturity experimental/multi-witness; RFC 0036",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/eventLog.schema.json"
     },
     "production": {
       "type": "object",
@@ -7364,7 +7352,7 @@
         }
       ],
       "description": "core/capabilities.md#production — witness: witnessable-gated; maturity experimental/single-witness; RFC 0009",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/production.schema.json"
     },
     "auth": {
       "type": "object",
@@ -7750,7 +7738,7 @@
         }
       ],
       "description": "core/capabilities.md#i18n — witness: witnessable-gated; maturity experimental/multi-witness",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/i18n.schema.json"
     },
     "content": {
       "type": "object",
@@ -7839,7 +7827,7 @@
         }
       ],
       "description": "core/capabilities.md#content — witness: witnessable-gated; maturity experimental/multi-witness; RFC 0103",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/content.schema.json"
     },
     "portability": {
       "type": "object",
@@ -7966,7 +7954,7 @@
         }
       ],
       "description": "core/capabilities.md#portability — witness: witnessable-gated; maturity experimental/single-witness; RFC 0098",
-      "x-openwop-seeded-from": "v1"
+      "x-openwop-facets-from": "spec/v2/facets/portability.schema.json"
     },
     "runList": {
       "type": "object",

@@ -36,6 +36,5 @@
       "description": "RFC 0113. Free-text relevance anchor (the `memory.search` semantic query) — REQUIRED when `rank:'relevance'`, ignored otherwise."
     }
   },
-  "additionalProperties": false,
-  "x-openwop-seeded-from": "v1"
+  "additionalProperties": false
 }

@@ -1,24 +1,21 @@
 openapi: 3.1.0
 info:
   title: OpenWOP v2 API
-  version: 2.49.12
+  version: 2.49.13
   summary: REST surface for declaring, executing, suspending, resuming, and observing multi-step workflows.
   description: 'The OpenWOP v2 REST API. Paths are unversioned and served at the bare origin; a client selects a version with
     the `OpenWOP-Version` header from the host''s `protocolVersions[]`. Conformance seams and test-mode operations are not
     in this document: they are in `api/seams-v2.yaml`. Every non-standard header is named `OpenWOP-<Name>`. Retry timing is
-    carried only in `Retry-After`.
-
-
-    Generated from `api/openapi.yaml` by `scripts/derive-v2-api.py`; do not edit.'
+    carried only in `Retry-After`.'
   contact:
     name: openwop spec working group
-    url: https://openwop.dev/spec/v1/
+    url: https://openwop.dev/spec/v2/
   license:
     name: Apache-2.0
     identifier: Apache-2.0
 externalDocs:
-  description: OpenWOP specification (v1 corpus)
-  url: https://openwop.dev/spec/v1/
+  description: OpenWOP v2 specification
+  url: https://openwop.dev/spec/v2/
 servers:
 - url: https://{host}
   description: An OpenWOP server.

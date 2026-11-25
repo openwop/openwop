@@ -1,0 +1,18 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "advertised": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^([a-z][a-z0-9-]*|x-host-[a-z][a-z0-9-]*-[a-z][a-z0-9-]*)$"
+      },
+      "uniqueItems": true,
+      "description": "Capability identifiers the host's active model advertises. Clients MAY introspect this at install time to determine whether their NodeModules' `requiredModelCapabilities` are satisfiable without fallback. Spec-reserved identifiers per RFC 0031 §C + RFC 0055: `structured-output`, `discriminator-enum`, `long-context`, `reasoning` (model-native thinking-tokens), `function-calling`, `vision-input` (model accepts image content in the prompt), `audio-input` (model accepts audio content), `audio-output` (model emits audio content), `image-output` (model emits images directly in its completion, distinct from the host-side `aiProviders.imageGeneration` tool surface). This is an open, pattern-validated registry — NOT a closed enum; growth requires an RFC. Host-private extensions MUST prefix with `x-host-<host>-`."
+    },
+    "substitutionSupported": {
+      "type": "boolean",
+      "description": "Host honors `NodeModule.fallbackModel` substitution per RFC 0031 §B step 3. When `false` or absent, hosts MUST refuse to dispatch (step 4) on any unmet capability — they MUST NOT attempt fallback even when the field is declared on the NodeModule. Recursive fallback is NOT permitted (RFC 0031 §\"Unresolved questions\" #3)."
+    }
+  }
+}

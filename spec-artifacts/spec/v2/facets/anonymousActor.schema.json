@@ -1,0 +1,65 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "tiers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "read",
+          "bounded-write-egress"
+        ]
+      },
+      "description": "RFC 0132 §B. The anon capability tiers this host BEHAVIORALLY honors (truthful-advertisement — a tier the host does not enforce per §C is a dishonest claim; `OPENWOP_REQUIRE_BEHAVIOR=true` MUST fail it). `read`: tenant-scoped reads, no egress, no secrets (§C.2). `bounded-write-egress`: writes/egress ONLY behind a §C.3 control."
+    },
+    "writeEgressControls": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "hitl",
+          "rate-limit-session-cap"
+        ]
+      },
+      "description": "RFC 0132 §B. REQUIRED and non-empty IFF `bounded-write-egress` ∈ `tiers`; MUST be absent otherwise. The mandatory control(s) the host enforces before an anon write/egress: `hitl` = a per-action approval gate (RFC 0051 — the action suspends pending a human decision); `rate-limit-session-cap` = a hard per-IP/per-window rate limit AND a per-session action cap. A `bounded-write-egress` tier with no advertised control is the fail-open shape §B.2 forbids."
+    },
+    "failClosed": {
+      "const": true,
+      "description": "RFC 0132. An anon tool call whose grant is absent, unresolvable, or errors MUST deny (never default-allow). There is no fail-open anonymous mode. Mirrors `capabilities.authorization.failClosed`."
+    }
+  },
+  "required": [
+    "tiers"
+  ],
+  "allOf": [
+    {
+      "$comment": "RFC 0132 §B.2 — writeEgressControls is REQUIRED and non-empty when bounded-write-egress is advertised, and MUST be absent otherwise (a control-less write/egress tier is the fail-open shape this RFC forbids).",
+      "if": {
+        "properties": {
+          "tiers": {
+            "contains": {
+              "const": "bounded-write-egress"
+            }
+          }
+        },
+        "required": [
+          "tiers"
+        ]
+      },
+      "then": {
+        "required": [
+          "writeEgressControls"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "writeEgressControls"
+          ]
+        }
+      }
+    }
+  ]
+}

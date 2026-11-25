@@ -1,0 +1,43 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "wasm": {
+      "type": "object",
+      "description": "WASM core-module runtime per RFC 0008. Hosts that load `runtime.language: \"wasm\"` packs MUST advertise this facet and at least one entry in `abiVersions[]`. `additionalProperties: true` preserved for future RFC 0008 amendments (e.g., per-pack memory accounting fields).",
+      "properties": {
+        "abiVersions": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "description": "ABI versions the loader accepts. v1.1 hosts MUST include `1`. Packs declaring `openwop_abi_version()` outside this list MUST be rejected at load time per RFC 0008 §H."
+        },
+        "maxMemoryBytes": {
+          "type": "integer",
+          "minimum": 1048576,
+          "maximum": 8589934592,
+          "description": "Per-pack memory ceiling enforced by the host loader. Range: 1 MiB ≤ value ≤ 8 GiB. RFC 0008 §K — when a pack exceeds this, the host MUST emit `cap.breached` with `kind: \"wasm-memory\"`."
+        },
+        "loadedPacks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "description": "Pack names that passed instantiation (ABI check + load). Packs rejected per RFC 0008 §H MUST NOT appear here. Hosts MAY advertise this for observability; conformance asserts rejection by absence (Track 7)."
+        }
+      },
+      "additionalProperties": true
+    },
+    "wasmComponent": {
+      "type": "object",
+      "description": "WASM Component Model variant (WIT-defined interfaces). Reserved for hosts that load `runtime.language: \"wasm-component\"` packs. `additionalProperties: true` preserved until the Component Model spec stabilises in the v1.x line; tighten in the RFC that promotes wasm-component to a first-class runtime alongside `wasm`.",
+      "properties": {},
+      "additionalProperties": true
+    }
+  }
+}

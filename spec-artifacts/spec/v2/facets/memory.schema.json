@@ -1,0 +1,140 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "maxEntrySizeBytes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Upper bound on `MemoryEntry.content` size. Hosts SHOULD reject `put` exceeding this with `validation_error`."
+    },
+    "ttlSupported": {
+      "type": "boolean",
+      "description": "When `true`, host honors `expiresAt` per RFC 0004 §E."
+    },
+    "compaction": {
+      "type": "object",
+      "description": "RFC 0012 Memory Compaction Profile (Accepted 2026-05-15). Hosts that distill many short-lived MemoryEntry rows into fewer long-lived ones MAY advertise here; advertising implies the SR-1 carry-forward invariant (`SECURITY/invariants.yaml` row `memory-compaction-sr-1-carry-forward`).",
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "enum": [
+            "host-managed",
+            "client-requested",
+            "both"
+          ],
+          "description": "REQUIRED when this facet is present, per RFC 0012 §A (enforced by this facet's `required`). `host-managed` runs on a host-internal schedule clients do not control. `client-requested` and `both` are reserved enum values; v1.x normates only `host-managed`."
+        },
+        "maxInputEntries": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Informational ceiling on how many source entries one compaction call collapses. Not wire-enforced."
+        },
+        "maxOutputBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Informational ceiling on the distilled entry size. SHOULD be ≤ `memory.maxEntrySizeBytes`."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "trigger"
+      ]
+    },
+    "distillation": {
+      "type": "object",
+      "description": "RFC 0062 (`Active`). Scheduled, token-budgeted background compaction — the 'dream' pattern — built on compaction (RFC 0012) + scheduling (RFC 0052) + the workspace index (RFC 0059). A distillation run IS a compaction run with a mandatory token budget, an optional schedule, and a retrieval index wrapped around it; it reuses the `memory.compacted` event (extended with the additive optional `distillation` sub-object) rather than a parallel `memory.distilled` event. SR-1 carry-forward (RFC 0012 §D) holds — a distilled archive MUST NOT re-expose a redacted secret. Hosts that omit this block keep plain on-demand compaction (RFC 0012) or no memory.",
+      "additionalProperties": false,
+      "properties": {
+        "maxTokenBudget": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Largest per-run distillation token budget the host honors. A supplied `distillation.tokenBudget` is clamped to this; absent ⇒ the host defaults to this."
+        },
+        "scheduled": {
+          "type": "boolean",
+          "description": "When `true`, host can initiate distillation on a schedule (requires `capabilities.scheduling`, RFC 0052). Distillation MAY also run on-demand without scheduling."
+        },
+        "indexEmitted": {
+          "type": "boolean",
+          "description": "When `true`, host writes a retrievable memory-index manifest (`MEMORY-INDEX.json`, a workspace file per RFC 0059) after distillation; updating it emits `workspace.updated`."
+        },
+        "tokenizerName": {
+          "type": "string",
+          "description": "Identifier of the tokenizer the budget is counted against (e.g. `claude`, `gpt-4`). The budget is best-effort-honest per this tokenizer (±10% conformance tolerance), not byte-exact."
+        },
+        "archiveRetention": {
+          "type": "string",
+          "description": "ISO-8601 duration (e.g. `P30D`) the distilled archives persist before GC. Recursive distillation (distilling prior archives) is allowed; each level re-checks SR-1."
+        }
+      }
+    },
+    "attribution": {
+      "type": "object",
+      "description": "RFC 0057 Memory write-attribution. Hosts that emit per-node memory provenance on the run event log MAY advertise here. Advertising `emitsWriteEvents: true` commits the host to emit a `memory.written` RunEvent for every memory write a run makes (identifiers only, never content), and implies the SECURITY invariants `memory-attribution-no-content` + `memory-attribution-tenant-scoped`.",
+      "properties": {
+        "emitsWriteEvents": {
+          "type": "boolean",
+          "description": "When `true`, the host emits `memory.written` (per `run-event-payloads.schema.json#/$defs/memoryWritten`) for every memory write during a run. When `false` or absent, consumers MUST tolerate the event never appearing."
+        }
+      },
+      "additionalProperties": false
+    },
+    "writable": {
+      "type": "boolean",
+      "description": "RFC 0080 §A (`write` dimension). Absent ⇒ the host implements the full RFC 0004 four-operation MemoryAdapter (`put`/`delete` available — i.e. writable), the back-compatible default. A read-only host (`get`/`list` only) MUST set `writable: false` so a consumer can distinguish a read-only store from a read/write one. Only meaningful when the family record is present."
+    },
+    "search": {
+      "type": "object",
+      "description": "RFC 0080 §A (`search` dimension) — NEW optional. Semantic or filtered query beyond the RFC 0004 `list` enumeration. Absent ⇒ only `list`/`get` retrieval is advertised. The query path itself stays the host-internal MemoryAdapter (RFC 0080 §B — no portable `GET /v1/memory` at v1.x).",
+      "additionalProperties": false,
+      "properties": {
+        "modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "semantic",
+              "filter"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "The query modes the host supports. `semantic` = embedding/similarity retrieval; `filter` = structured predicate query over entry metadata. Omitted ⇒ unspecified mode (the host supports some query beyond `list`)."
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "description": "RFC 0080 §A (`retention/forget` dimension) — NEW optional. TTL expiry (host-services.md §`memory`, Size and expiry) and/or an explicit forget operation. Absent ⇒ no TTL beyond `ttlSupported` and no forget operation advertised. `forget` is a host-managed mutation OUTSIDE the replay envelope (RFC 0080 §UQ3 / `replay.md` §Recorded-fact events — a replay re-reads the log-recorded snapshot, not live memory).",
+      "additionalProperties": false,
+      "properties": {
+        "ttl": {
+          "type": "boolean",
+          "description": "When `true`, memory entries expire per `expiresAt` (the `ttlSupported` semantics surfaced as a named retention dimension)."
+        },
+        "forget": {
+          "type": "boolean",
+          "description": "When `true`, the host supports a tenant-scoped delete-by-subject forget operation (composes the CTI-1 cross-tenant invariant — a forget MUST NOT cross tenant boundaries)."
+        }
+      }
+    },
+    "injectionBudget": {
+      "type": "object",
+      "description": "RFC 0113 (`Active`). The host honors `MemoryListOptions.tokenBudget` — a token-denominated bound on a single injection read (the live read that feeds a turn), distinct from RFC 0062 distillation's background-compaction budget. Advertising it commits the host to return a token-bounded prefix of the ranked entry list (over-budget single entry omitted, never truncated mid-entry) over the SR-1-redacted, CTI-1-single-tenant result set. Relevance ranking is NOT advertised here — `rank:'relevance'` delegates to the existing `memory.search` semantic mode (RFC 0080), so there is exactly one relevance surface in the corpus. Hosts that omit this block do not honor `tokenBudget` (a supplied `tokenBudget` is ignored, today's `limit`/`tag` behavior).",
+      "additionalProperties": false,
+      "properties": {
+        "tokenCounter": {
+          "type": "string",
+          "enum": [
+            "o200k_base",
+            "cl100k_base",
+            "chars",
+            "host-defined"
+          ],
+          "description": "The unit `tokenBudget` is denominated in. REQUIRED when `injectionBudget` is advertised (enforced by that facet's `required`). `o200k_base`/`cl100k_base` are tokenizer encodings; `chars` counts UTF-8/Unicode characters of the entry `content` (a tokenizer-free unit a client can reason about directly — preferred over opaque `host-defined`); `host-defined` is an opaque host unit. The over-budget-single-entry-omitted rule applies regardless of unit. RFC 0111 aligns to these same values when it lands (0113 lands first); no shared `$ref` (decoupled)."
+        }
+      },
+      "required": [
+        "tokenCounter"
+      ]
+    }
+  }
+}

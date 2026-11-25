@@ -1,0 +1,9 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "propagatesOnward": {
+      "type": "boolean",
+      "description": "RFC 0128. When `true`, the host's onward OpenWOP-envelope hops (A2A forwards, trigger/sync events to OpenWOP peers) re-emit the label. Distinct from the family record only for hosts that read labels but have no onward-hop surface at all; a host WITH onward hops that advertises this facet MUST also propagate."
+    }
+  }
+}

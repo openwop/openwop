@@ -1,0 +1,24 @@
+{
+  "$comment": "Seeded from the frozen v1 discovery schema at the RFC 0266 §C cut-over (byte-equal to the 2.49.12 derivation); v2-owned since, edited by hand.",
+  "properties": {
+    "versioned": {
+      "type": "boolean",
+      "description": "Each write bumps a monotonic `version`; prior versions are retrievable via `GET …/files/{path}?version=N`. Latest-version retrieval is the MUST regardless; history is best-effort up to `maxVersions`."
+    },
+    "maxFileBytes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Per-file byte ceiling; writes beyond it return `workspace_too_large`."
+    },
+    "maxFiles": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Per-workspace file-count ceiling."
+    },
+    "maxVersions": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "When `versioned: true`, the number of historical versions a host advertises it will retain (history best-effort beyond the mandatory latest)."
+    }
+  }
+}

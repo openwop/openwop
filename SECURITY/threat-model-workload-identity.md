@@ -124,4 +124,4 @@
 
 ## 8. References
 
-*(Section added 2026-09-03 for the corpus threat-model template — RFC 0173 §E.2 / `scripts/check-threat-model-template.mjs`.)* The RFCs and documents this model cites are those named inline in §1–§7; the canonical registers are `SECURITY/invariants.yaml` (the invariant rows this model owns) and `spec/v1/gaps.json`.
+*(Section added 2026-09-03 for the corpus threat-model template — RFC 0173 §E.2 / `scripts/check-threat-model-template.mjs`.)* The RFCs and documents this model cites are those named inline in §1–§7; the canonical registers are `SECURITY/invariants.yaml` (the invariant rows this model owns) and `spec/v2/gaps.json`.
