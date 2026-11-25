@@ -179,7 +179,10 @@ function siblingVersionRows() {
   const a = v['openwop-app'];
   if (a) rows.push({ artifact: 'openwop-app corpus pin / suite pin', version: `${a.corpusTag ?? 'unpinned'} / ${a.conformancePin ?? '?'}`, source: 'openwop-app `schemas/CORPUS_TAG`, `backend/typescript/package.json`', cadence: 'tier-1 host; both must agree (RFC 0176 §E.1)' });
   const e = v['openwop-examples'];
-  if (e) rows.push({ artifact: 'openwop-examples in-memory host / suite pin', version: `${e.inMemoryHost ?? '?'} / ${e.conformancePin ?? 'unpinned'}`, source: 'openwop-examples `examples/hosts/in-memory/package.json`', cadence: 'front-door witness host for the v2 RC (Phase 3 plan §11)' });
+  const HOST_CADENCE = { 'v2-reference': 'steward v2 reference host (tier-1 witness)', sqlite: 'v2 example host; the Conformance Soak gate boots it' };
+  for (const [h, rec] of Object.entries(e?.hosts ?? {})) {
+    if (rec) rows.push({ artifact: `openwop-examples ${h} host / suite pin`, version: `${rec.version ?? '?'} / ${rec.conformancePin ?? 'unpinned'}`, source: `openwop-examples \`examples/hosts/${h}/package.json\``, cadence: HOST_CADENCE[h] ?? 'example host' });
+  }
   return rows;
 }
 
