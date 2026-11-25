@@ -4,10 +4,7 @@ info:
   version: 2.49.12
   description: 'The OpenWOP conformance seams profile (`openwop-conformance-seams-v2`): test-only operations in their own
     path space, `/conformance/seams/…`. The profile is versioned and validated against the canonical v2 schemas with no tolerance
-    path. It is not a capability: a host advertises the profile, never a `testSeams` flag.
-
-
-    Generated from `api/openapi.yaml` by `scripts/derive-v2-api.py`; do not edit.'
+    path. It is not a capability: a host advertises the profile, never a `testSeams` flag.'
 servers:
 - url: https://{host}
   description: An OpenWOP server.

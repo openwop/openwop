@@ -117,7 +117,7 @@ for (const f of files) {
 }
 
 // api/v2/openapi.yaml parameters. §5 names them explicitly, and the one that was
-// wrong was wrong because this document is DERIVED from api/openapi.yaml: v1's
+// wrong was wrong because this document was DERIVED from api/openapi.yaml: v1's
 // bare-id typing was inherited into a major where the grammar changed.
 const oapi = join(ROOT, 'api', 'v2', 'openapi.yaml');
 if (existsSync(oapi)) {
@@ -148,7 +148,7 @@ if (existsSync(oapi)) {
 // is the one plural id array the v2 path space accepts inbound, and it was the
 // surface a tier-1 host found unbound. The parameter scan above cannot see it —
 // it lives in an inline request schema — so it is asserted by name here, and
-// the fix lives in derive-v2-api.py rather than in this file's output.
+// the fix lives in api/v2/openapi.yaml (its own source since RFC 0266 §C).
 if (existsSync(oapi)) {
   const text = readFileSync(oapi, 'utf8');
   const at = text.indexOf('/runs:bulk-cancel');

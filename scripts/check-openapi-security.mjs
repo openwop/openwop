@@ -32,9 +32,8 @@
  * `conformance/src/coherence/openapi-security-declared.test.ts`, which runs this script —
  * a script alone mints nothing.
  *
- * Rule (d) is deliberately NOT applied to v2: the v2 document is generated, five of its
- * operations have no v1 ancestor (their scopes are named in `scripts/derive-v2-api.py`
- * V2_ONLY_SCOPES), and `rest-endpoints.md` is a v1 document whose paths carry the `/v1`
+ * Rule (d) is deliberately NOT applied to v2: several v2 operations have no v1
+ * ancestor, and `rest-endpoints.md` is a v1 document whose paths carry the `/v1`
  * prefix v2 strips. Rules (a), (b), (c) and (e) bind both.
  *
  * Exit 0 on success, 1 on any failure.

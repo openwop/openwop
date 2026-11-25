@@ -2,10 +2,9 @@
 """check-asyncapi-codemap — api/v2/asyncapi.yaml names v2 events, never v1 spellings.
 
 events.md §"SSE frames": the SSE `event:` label is the v2 `type`, and the v2 names are
-the `v2` column of spec/v2/event-codemap.json. api/v2/asyncapi.yaml is GENERATED from the
-v1 document by scripts/derive-v2-api.py, which copies v1 components; this gate refuses a
-v1 spelling that survives the copy (2.36.2, D5 — ten such names shipped through 2.36.1
-with no gate noticing). It checks:
+the `v2` column of spec/v2/event-codemap.json. api/v2/asyncapi.yaml was generated from the
+v1 document until RFC 0266 §C made it its own source; this gate refuses a v1 spelling in
+it (2.36.2, D5 — ten such names shipped through 2.36.1 with no gate noticing). It checks:
 
   1. every `components.messages[*].name` is a codemap v2 name, unless the message is
      exempt below; a name that is a v1 spelling of a renamed row is reported as such;

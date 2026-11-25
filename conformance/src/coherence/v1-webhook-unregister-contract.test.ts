@@ -13,8 +13,8 @@
  * Like `v1-webhook-rotation-contract`, this leg starts from the PROSE and
  * asserts the contract answers it. The v2 twin carries the tenant inside the
  * tenant-bound `webhookId` (`identity.md` §5), so the v2 contract must NOT
- * grow the v1 query parameter — asserted too, because `derive-v2-api.py`
- * derives v2 from v1 and would otherwise copy it across.
+ * grow the v1 query parameter — asserted too, because v2 was derived from v1
+ * until RFC 0266 §C and a copied v1 parameter is the regression to catch.
  *
  * Server-free: reads `spec/v1/webhooks.md`, `api/openapi.yaml` and
  * `api/v2/openapi.yaml` on disk; no host is contacted. Runs in the spec repo's
