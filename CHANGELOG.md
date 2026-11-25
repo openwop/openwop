@@ -31,6 +31,11 @@ Entries before this file was condensed carried full development detail. That tex
 
 ### Security
 
+## [2.49.14] — 2026-11-25 — POST /runs accepts a valid body
+
+- **`POST /runs` accepts a valid body again.** `schemas/v2/run-options.schema.json` no longer closes its own root, which made every createRun body fail strict validation (RFC 0094 §A, correction `openwop.correction.v2.6`); unknown fields still fail at the composed body.
+- **Configurable descriptions match `runs.md`.** run-options and `RunSnapshot.configurable` now say unknown keys are rejected with `400 validation_error` and describe the nested v2 shape.
+
 ## [2.49.13] — 2026-11-25 — RFC 0266 §C: v2 is generated from v2
 
 - **RFC 0266 §C: v2 is generated from v2.** `api/v2`, `api/seams-v2.yaml` and `schemas/v2` are their own source; the v1→v2 derivations are retired, facet shapes live in `spec/v2/facets/`, and the v1 gRPC proto copy is removed from `spec/v2` (v2 has no gRPC binding).

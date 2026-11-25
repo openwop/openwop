@@ -1,3 +1,7 @@
+## [2.49.14] — 2026-11-25 — The composed createRun body validates
+
+- **`spec-corpus-validity`.** Two legs: a minimal valid `POST /runs` body passes the composed requestBody schema, and a body with an unknown top-level field fails it. No host-facing scenario change.
+
 ## [2.49.13] — 2026-11-25 — No scenario change
 
 - No scenario change. The vendored v2 schemas and API documents lose their v1-derivation markers and headers (RFC 0266 §C).
