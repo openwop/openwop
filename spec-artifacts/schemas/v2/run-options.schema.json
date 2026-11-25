@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/run-options.schema.json",
   "title": "RunOptions",
-  "description": "Per-run parameter overlay supplied by the caller in `POST /runs`; runs.md §Run options states its semantics. Reserved keys are typed; unknown keys in `configurable` pass through to the engine. RFC 0094 §A: this schema is OPEN at its own root (no `additionalProperties: false`) because it participates in the composed `createRun` request body in `api/v2/openapi.yaml`; the closure (`unevaluatedProperties: false`) lives at that composition site, the only place JSON Schema 2020-12 can express closure over an `allOf`.",
+  "description": "Per-run parameter overlay supplied by the caller in `POST /runs`; runs.md §Run options states its semantics. `configurable` is `configurable.schema.json`, closed, nested and versioned: an unknown root key, an unknown key inside a section, or a dotted key MUST be rejected with `400 validation_error` (runs.md §Run options, \"Validation and persistence\"). RFC 0094 §A: this schema is an `allOf` branch of the composed `createRun` request body in `api/v2/openapi.yaml`, so it is OPEN at its own root and carries no `additionalProperties` keyword at all. `false` would reject the body's own `workflowId`; `true` would mark every property evaluated and so switch the composed closure off. The closure (`unevaluatedProperties: false`) lives at that composition site, the only place JSON Schema 2020-12 can express closure over an `allOf`. Validated on its own, this schema accepts unknown root keys; validate the composed request body.",
   "type": "object",
   "properties": {
     "configurable": {
@@ -28,7 +28,7 @@
   "$defs": {
     "Configurable": {
       "type": "object",
-      "description": "Reserved keys are typed below; unknown keys pass through verbatim. Implementations declare which keys they consume via `Capabilities.configurable` when advertised.",
+      "description": "Not the wire shape: no schema references this flat key set, and `RunOptions.configurable` is `configurable.schema.json` (closed, nested in sections; an unknown or dotted key MUST be rejected with `400 validation_error`, runs.md §Run options, \"Validation and persistence\"). It is kept only as the home of `$defs/MockProvider`, the informative mock-provider catalog.",
       "properties": {
         "recursionLimit": {
           "type": "integer",
@@ -85,6 +85,5 @@
       },
       "additionalProperties": false
     }
-  },
-  "additionalProperties": false
+  }
 }

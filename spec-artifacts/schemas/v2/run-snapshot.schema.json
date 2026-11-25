@@ -153,7 +153,7 @@
     },
     "configurable": {
       "type": "object",
-      "description": "Per-run overlay from `RunOptions.configurable` (runs.md §Run options). Reserved keys: `recursionLimit`, `model`, `temperature`, `maxTokens`, `promptOverrides`.",
+      "description": "The persisted `RunOptions.configurable` (runs.md §Run options): the v2 nested shape of `configurable.schema.json`, `version` (`1`) plus the sections `run`, `ai`, `distillation`, `budget` and `extensions.<org>`. There are no flat reserved keys; `ai.model`, not `model`. A host persists it at creation and it never changes after (runs.md §Run options, \"Validation and persistence\").",
       "additionalProperties": true
     },
     "metrics": {

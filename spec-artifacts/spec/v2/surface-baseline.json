@@ -4,7 +4,7 @@
     "schemas/v2/**/*.json",
     "spec/v2/path-manifest.json"
   ],
-  "release": "2.49.13",
+  "release": "2.49.14",
   "kinds": {
     "union": [
       "channel",
@@ -18,7 +18,7 @@
       "type"
     ]
   },
-  "count": 9033,
+  "count": 9032,
   "surfaces": [
     "schemas/v2/a2a-task-state.schema.json#/contextId|type|string",
     "schemas/v2/a2a-task-state.schema.json#/interruptKind|enum-member|\"approval\"",
@@ -7321,7 +7321,6 @@
     "schemas/v2/run-options.schema.json#/metadata|type|object",
     "schemas/v2/run-options.schema.json#/tags/[]|type|string",
     "schemas/v2/run-options.schema.json#/tags|type|array",
-    "schemas/v2/run-options.schema.json#|closed|true",
     "schemas/v2/run-options.schema.json#|property|configurable",
     "schemas/v2/run-options.schema.json#|property|metadata",
     "schemas/v2/run-options.schema.json#|property|tags",

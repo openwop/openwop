@@ -8,7 +8,12 @@
  *   3. closure (charter §F "Closure"): every object schema declares
  *      `additionalProperties` (false, or a schema for a declared map); the root
  *      of capabilities, certification-bundle, run-event-payloads, error-envelope
- *      and configurable is `additionalProperties: false`; the only vendor
+ *      and configurable is `additionalProperties: false`; a schema in
+ *      COMPOSITION_BRANCH_ROOTS is the one exception and its root carries NO
+ *      `additionalProperties` keyword (RFC 0094 §A: it is an `allOf` branch whose
+ *      closure is `unevaluatedProperties: false` at the composition site, where
+ *      `false` rejects the sibling branch's properties and `true` marks every
+ *      property evaluated and switches the closure off); the only vendor
  *      grammars are the three RFC 0169 §A.4 / RFC 0177 §C.2 / RFC 0171 §A.1
  *      allow: `extensions.<org>.<name>`, `^(openwop-|x-|vendor\.)` on
  *      pack-authored documents, positive `<org>.` patterns in registry enums;
@@ -33,10 +38,15 @@ const ajv = new Ajv2020({ allErrors: true, strict: false, validateFormats: true 
 const docs = files.map((p) => [relative(DIR, p), JSON.parse(readFileSync(p, 'utf8'))]);
 for (const [rel, doc] of docs) { if (doc.$id !== `https://openwop.dev/spec/v2/${rel}`) failures.push(`${rel}: $id is ${doc.$id}`); try { ajv.addSchema(doc); } catch (e) { failures.push(`${rel}: addSchema — ${e.message}`); } }
 const ROOT_CLOSED = ['capabilities.schema.json', 'certification-bundle.schema.json', 'run-event-payloads.schema.json', 'error-envelope.schema.json', 'configurable.schema.json'];
+// RFC 0094 §A: roots that are `allOf` branches of a composition closed with
+// `unevaluatedProperties: false`, mapped to that site. Their root closure is the
+// site's, so the root MUST NOT declare `additionalProperties` either way.
+const COMPOSITION_BRANCH_ROOTS = { 'run-options.schema.json': 'api/v2/openapi.yaml createRun requestBody' };
 const ALLOWED_PATTERNS = new Set(['^(openwop-|x-|vendor\\.)', '^(x-|vendor\\.)']);
 for (const [rel, doc] of docs) {
   try { ajv.getSchema(doc.$id) ?? ajv.compile(doc); } catch (e) { failures.push(`${rel}: compile — ${e.message}`); }
   if (doc['x-openwop-seeded-from'] === 'v1') failures.push(`${rel}: marked as seeded from v1 — schemas/v2 is its own source (RFC 0266 §C.1); drop the marker`);
+  if (COMPOSITION_BRANCH_ROOTS[rel] && 'additionalProperties' in doc) failures.push(`${rel}: root declares additionalProperties, but its closure is the composition's (${COMPOSITION_BRANCH_ROOTS[rel]}; RFC 0094 §A) — false rejects the sibling branch's properties, true switches unevaluatedProperties off`);
   if (ROOT_CLOSED.includes(rel) && doc.additionalProperties !== false) failures.push(`${rel}: root must be additionalProperties:false (charter §F Closure)`);
   // A `properties` / `$defs` / `patternProperties` value is a MAP of schemas,
   // never a schema itself — a map that happens to hold a property named
@@ -47,7 +57,7 @@ for (const [rel, doc] of docs) {
     if (!node || typeof node !== 'object') return;
     if (Array.isArray(node)) { node.forEach((n, i) => visit(n, `${path}[${i}]`)); return; }
     if (node.type === 'object' || (node.properties && typeof node.properties === 'object')) {
-      const fragment = /\.(anyOf|oneOf|allOf)\[\d+\]$/.test(path); // a direct anyOf/oneOf/allOf member is a constraint on the parent shape; closure is the parent's
+      const fragment = /\.(anyOf|oneOf|allOf)\[\d+\]$/.test(path) || (path === '$' && Boolean(COMPOSITION_BRANCH_ROOTS[rel])); // a direct anyOf/oneOf/allOf member is a constraint on the parent shape; closure is the parent's
       if (node.additionalProperties === undefined && !node.patternProperties && !node.$ref && !fragment && !/\.(then|else|not)(\.|$)/.test(path)) failures.push(`${rel} ${path}: object declares no additionalProperties`);
       if (node.patternProperties) for (const pk of Object.keys(node.patternProperties)) if (!ALLOWED_PATTERNS.has(pk) && !/\^\[a-z\]\[a-z0-9\]\*\(-\[a-z0-9\]\+\)\*\\\./.test(pk) && !/^\^\[/.test(pk)) failures.push(`${rel} ${path}: patternProperties ${pk} is not an allowed vendor grammar`);
     }
