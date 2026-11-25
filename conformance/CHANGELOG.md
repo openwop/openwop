@@ -1,3 +1,10 @@
+## [2.49.9] — 2026-11-25 — Four legs catch the sabotage they missed
+
+- **`v2-run-list`.** `0182.run-list.filter-exact` creates a `conformance-failure` run after the `conformance-noop` one, so a host that ignores `workflowId` lists it. On a store holding only noop runs the leg could not fail.
+- **`v2-mcp-tasks`.** `0198.task-id-is-run-id` refuses a `taskId` that carries a raw `/`. Unprojecting an unprojected id returns it unchanged, so a host returning the raw run id passed.
+- **`v2-webhook-durable-delivery`.** `0188.dead-letter-content-free` validates the page against `webhook-dead-letter-page.schema.json`. The key-name check alone passed a record holding the delivered body under another name.
+- **`v2-approval-reject-disposition`.** `0223.quorum-reject-fails-run` asserts the gate is still open right after the first reject. A host whose first reject decided the gate answered the second vote 409 and the leg recorded `blocked`.
+
 ## [2.49.8] — 2026-11-22 — RFC 0260 Accepted
 
 - No scenario change. The corpus records RFC 0260 Accepted on openwop-app's certified 2.49.7 cut; the packed gap register and status surfaces change.

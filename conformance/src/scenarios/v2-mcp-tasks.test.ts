@@ -279,6 +279,9 @@ describe('RFC 0198 — v2-mcp-tasks (MCP Tasks on the server mount; disconnect c
     if (missing) return softSkip('blocked', missing);
     const r = await createTask(m.url, 'conformance-approval');
     const taskId = String(r.result?.['taskId'] ?? '');
+    // The projected form carries no raw `/`; unprojecting an unprojected id returns it
+    // unchanged, so without this a host returning the raw runId passed (RFC 0263 G3 backfill).
+    expect(taskId.includes('/'), req(ID_TASK_ID_IS_RUN_ID, `${DOC}; identity.md §5`, `taskId MUST be the PROJECTED runId, with no raw "/" (got ${JSON.stringify(taskId)})`)).toBe(false);
     const runId = unproject(taskId);
     const match = BOUND.exec(runId);
     expect(match !== null, req(ID_TASK_ID_IS_RUN_ID, `${DOC}; identity.md §5`, `taskId MUST be the run's projected tenant-bound runId <tenantId>~2F<opaque> (got ${JSON.stringify(taskId)})`)).toBe(true);

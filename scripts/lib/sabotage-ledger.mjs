@@ -73,7 +73,9 @@ export function ledgerShapeFailures(doc, certifiedDigests = new Set()) {
   doc.rows.forEach((r, i) => {
     const at = `evidence/sabotage-ledger.json rows[${i}]`;
     for (const k of Object.keys(r ?? {})) if (!KEYS.has(k)) out.push(`${at}: unknown member \`${k}\``);
-    if (!/^openwop\.requirement\.\d{4}\.[a-z0-9][a-z0-9.-]*$/.test(r?.requirementId ?? '')) out.push(`${at}: requirementId must be an openwop.requirement.NNNN.<slug> id`);
+    // §B: "the cited id". A pre-0258 table may cite a family-named id (`errors.…`), so the
+    // second segment is an RFC number or a family name.
+    if (!/^openwop\.requirement\.(\d{4}|[a-z][a-z0-9-]*)\.[a-z0-9][a-z0-9.-]*$/.test(r?.requirementId ?? '')) out.push(`${at}: requirementId must be an openwop.requirement.<NNNN|family>.<slug> id`);
     if (!/^[a-z0-9-]+\.test\.ts$/.test(r?.scenario ?? '')) out.push(`${at}: scenario must name a .test.ts file`);
     if (typeof r?.sabotage !== 'string' || r.sabotage.trim().length < 20) out.push(`${at}: sabotage must say, in a sentence, what was broken`);
     if (typeof r?.subject?.host !== 'string' || typeof r?.subject?.build !== 'string' || Object.keys(r.subject).some((k) => k !== 'host' && k !== 'build')) out.push(`${at}: subject must be exactly { host, build }`);

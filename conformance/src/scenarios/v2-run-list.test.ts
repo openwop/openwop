@@ -25,6 +25,7 @@ import { walkRunList, type FetchPage, type RunListPage, type WalkResult } from '
 
 const DOC = 'spec/v2/core/runs.md §List';
 const NOOP_WORKFLOW_ID = 'conformance-noop';
+const OTHER_WORKFLOW_ID = 'conformance-failure';
 const MAX_PAGES = 50;
 /** Pages still followed after the created runs are seen, so a host-minted cursor is exercised. */
 const TAIL_PAGES = 2;
@@ -33,11 +34,11 @@ async function http(fn: () => Promise<OpenWOPResponse>): Promise<OpenWOPResponse
   try { return await fn(); } catch { return null; }
 }
 
-async function createRun(): Promise<{ runId: string } | { reason: string }> {
-  const res = await http(() => driver.post('/runs', { workflowId: NOOP_WORKFLOW_ID }));
+async function createRun(workflowId = NOOP_WORKFLOW_ID): Promise<{ runId: string } | { reason: string }> {
+  const res = await http(() => driver.post('/runs', { workflowId }));
   if (res === null) return { reason: 'POST /runs unreachable (fetch failed)' };
   const runId = (res.json as { runId?: unknown } | undefined)?.runId;
-  if (res.status !== 201 || typeof runId !== 'string') return { reason: `POST /runs {workflowId: ${NOOP_WORKFLOW_ID}} answered ${res.status} ${readErrorCode(res.json) ?? ''} — the smallest valid create was refused (fixture not seeded?)`.trim() };
+  if (res.status !== 201 || typeof runId !== 'string') return { reason: `POST /runs {workflowId: ${workflowId}} answered ${res.status} ${readErrorCode(res.json) ?? ''} — the smallest valid create was refused (fixture not seeded?)`.trim() };
   return { runId };
 }
 
@@ -96,6 +97,9 @@ describe('RFC 0182 — run-list (gated on runList)', () => {
     if (!filters.includes('workflowId')) return softSkip('inapplicable', 'runList.filters does not name workflowId — the filter leg has no obligation');
     const maxPageSize = typeof fam['maxPageSize'] === 'number' ? fam['maxPageSize'] : 1;
     const c = await createRun(); if ('reason' in c) return softSkip('blocked', c.reason);
+    // A run of a second workflow, created last so it is the newest: on a store holding only
+    // noop runs a host that ignores the filter would otherwise pass (RFC 0263 G3 backfill).
+    const other = await createRun(OTHER_WORKFLOW_ID); if ('reason' in other) return softSkip('blocked', other.reason);
     const walked = await walk(`?workflowId=${encodeURIComponent(NOOP_WORKFLOW_ID)}`, maxPageSize, [c.runId]);
     if (walked.reason && walked.pages.length === 0) return softSkip('blocked', walked.reason);
     const others = walked.pages.flatMap((p) => (Array.isArray(p.runs) ? p.runs : [])).filter((r) => (r as { workflowId?: unknown }).workflowId !== NOOP_WORKFLOW_ID);

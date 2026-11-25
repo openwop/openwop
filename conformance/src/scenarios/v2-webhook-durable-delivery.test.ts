@@ -33,7 +33,7 @@
 
 import { afterEach, describe, it, expect } from 'vitest';
 import { driver } from '../lib/driver.js';
-import { v2Discovery, gateFamily } from '../lib/v2.js';
+import { v2Discovery, gateFamily, v2Validator } from '../lib/v2.js';
 import { projectBoundId } from '../lib/bound-id.js';
 import { absenceIsUnmeasured, noDeliveryCause, startScopedReceiver, type ScopedReceiver } from '../lib/scoped-receiver.js';
 import { readErrorCode } from '../lib/error-envelope.js';
@@ -660,6 +660,11 @@ describe('RFC 0173 §B — webhook-durable-delivery (gated on webhooks)', () => 
       rows.every((r) => r['body'] === undefined && r['headers'] === undefined && r['secret'] === undefined),
       req('openwop.requirement.0188.dead-letter-content-free', 'RFC 0188 §B.1', `a dead-letter record MUST NOT carry the delivered body, headers or subscription secret — the queue is precisely the traffic the subscriber never received, so a record carrying any of it turns one read scope into a replay of that traffic for the whole retention window (read ${rows.length} record(s))`),
     ).toBe(true);
+    // The key-name check above misses the body carried under any other name. The page
+    // schema is closed, so a record holding anything beyond what names the delivery
+    // fails it (RFC 0263 G3 backfill: a host adding the body as `payload` passed).
+    const page = v2Validator('webhook-dead-letter-page')(sink.json);
+    expect(page.ok, req('openwop.requirement.0188.dead-letter-content-free', 'RFC 0188 §B.1', `a dead-letter record MUST carry only what names the delivery — the closed webhook-dead-letter-page schema admits nothing else (${page.errors})`)).toBe(true);
   }, DEAD_LETTER_TEST_TIMEOUT_MS);
   /**
    * openwop#1781: "deliver each matching event at least once" binds EVERY
