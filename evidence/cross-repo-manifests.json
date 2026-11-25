@@ -3,7 +3,7 @@
   "generated": "2026-11-25",
   "repos": {
     "openwop-examples": {
-      "commit": "78d4bf43ff4d9bf7ae649fb83c66cde238b4ea8f",
+      "commit": "df8b328d86851e7fa9f4d503c1a276cabfd48dac",
       "files": {
         "examples/hosts/postgres/src/audit-export.ts": {
           "exists": true,
@@ -72,7 +72,7 @@
       }
     },
     "openwop-app": {
-      "commit": "249117305e81cbdd54851d81e5484fa893edb264",
+      "commit": "8fb30c4744637359c627070e2060b17d40fcc407",
       "files": {
         "backend/typescript/src/byok/ephemeralRunSecrets.ts": {
           "exists": true,
@@ -244,8 +244,8 @@
       "corpusTag": "v2.46.36"
     },
     "openwop-app": {
-      "corpusTag": "v2.49.7",
-      "conformancePin": "^2.49.7"
+      "corpusTag": "v2.49.9",
+      "conformancePin": "^2.49.9"
     },
     "openwop-examples": {
       "hosts": {
