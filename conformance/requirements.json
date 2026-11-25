@@ -3,10 +3,10 @@
   "generatedFrom": "src/scenarios/*.test.ts",
   "counts": {
     "files": 759,
-    "tests": 2923,
-    "withStableId": 2923,
+    "tests": 2925,
+    "withStableId": 2925,
     "interpolatedTitles": 0,
-    "explicitIds": 2860
+    "explicitIds": 2862
   },
   "records": [
     {
@@ -46782,7 +46782,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.finds-at-least-three-schemas-workflow-definition-run-event-suspend-request",
       "file": "spec-corpus-validity.test.ts",
-      "line": 557,
+      "line": 559,
       "title": "finds at least three schemas (workflow-definition, run-event, suspend-request)",
       "explicitId": "openwop.it.spec-corpus-validity.finds-at-least-three-schemas-workflow-definition-run-event-suspend-request",
       "citations": [
@@ -46795,7 +46795,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.parses-compiles",
       "file": "spec-corpus-validity.test.ts",
-      "line": 565,
+      "line": 567,
       "title": null,
       "explicitId": "openwop.it.spec-corpus-validity.parses-compiles",
       "citations": [
@@ -46809,7 +46809,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.schemas-readme-md-exists-next-to-schema-files",
       "file": "spec-corpus-validity.test.ts",
-      "line": 584,
+      "line": 586,
       "title": "schemas/README.md exists next to schema files",
       "explicitId": "openwop.it.spec-corpus-validity.schemas-readme-md-exists-next-to-schema-files",
       "citations": [
@@ -46822,7 +46822,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.schemas-readme-md-lists-every-schema-json-exactly-once",
       "file": "spec-corpus-validity.test.ts",
-      "line": 588,
+      "line": 590,
       "title": "schemas/README.md lists every *.schema.json exactly once",
       "explicitId": "openwop.it.spec-corpus-validity.schemas-readme-md-lists-every-schema-json-exactly-once",
       "citations": [
@@ -46849,7 +46849,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.absolute-refs-point-to-known-schema-ids",
       "file": "spec-corpus-validity.test.ts",
-      "line": 629,
+      "line": 631,
       "title": null,
       "explicitId": "openwop.it.spec-corpus-validity.absolute-refs-point-to-known-schema-ids",
       "citations": [
@@ -46863,7 +46863,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.payload-type-index-keys-exactly-match-runeventtype-enum-values",
       "file": "spec-corpus-validity.test.ts",
-      "line": 663,
+      "line": 665,
       "title": "payload type-index keys exactly match RunEventType enum values",
       "explicitId": "openwop.it.spec-corpus-validity.payload-type-index-keys-exactly-match-runeventtype-enum-values",
       "citations": [
@@ -46876,7 +46876,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.payload-type-index-refs-point-to-declared-payload-defs",
       "file": "spec-corpus-validity.test.ts",
-      "line": 672,
+      "line": 674,
       "title": "payload type-index refs point to declared payload $defs",
       "explicitId": "openwop.it.spec-corpus-validity.payload-type-index-refs-point-to-declared-payload-defs",
       "citations": [
@@ -46904,7 +46904,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.payload-schema-description-states-the-current-runeventtype-variant-count",
       "file": "spec-corpus-validity.test.ts",
-      "line": 688,
+      "line": 690,
       "title": "payload schema description states the current RunEventType variant count",
       "explicitId": "openwop.it.spec-corpus-validity.payload-schema-description-states-the-current-runeventtype-variant-count",
       "citations": [
@@ -46921,7 +46921,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.exists",
       "file": "spec-corpus-validity.test.ts",
-      "line": 703,
+      "line": 705,
       "title": "exists",
       "explicitId": "openwop.it.spec-corpus-validity.exists",
       "citations": [
@@ -46934,7 +46934,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.declares-openapi-3-1-required-top-level-keys",
       "file": "spec-corpus-validity.test.ts",
-      "line": 707,
+      "line": 709,
       "title": "declares openapi: 3.1 + required top-level keys",
       "explicitId": "openwop.it.spec-corpus-validity.declares-openapi-3-1-required-top-level-keys",
       "citations": [
@@ -46947,7 +46947,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-ref-to-schemas-json-resolves-to-a-real-file",
       "file": "spec-corpus-validity.test.ts",
-      "line": 716,
+      "line": 718,
       "title": "every $ref to ../schemas/*.json resolves to a real file",
       "explicitId": "openwop.it.spec-corpus-validity.every-ref-to-schemas-json-resolves-to-a-real-file",
       "citations": [
@@ -46961,7 +46961,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.operationids-are-unique",
       "file": "spec-corpus-validity.test.ts",
-      "line": 726,
+      "line": 728,
       "title": "operationIds are unique",
       "explicitId": "openwop.it.spec-corpus-validity.operationids-are-unique",
       "citations": [
@@ -46979,7 +46979,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-operation-tag-is-declared-in-the-top-level-tags-list",
       "file": "spec-corpus-validity.test.ts",
-      "line": 735,
+      "line": 737,
       "title": "every operation tag is declared in the top-level tags list",
       "explicitId": "openwop.it.spec-corpus-validity.every-operation-tag-is-declared-in-the-top-level-tags-list",
       "citations": [
@@ -47001,7 +47001,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.declares-apikeyauth-as-the-global-default-security-requirement",
       "file": "spec-corpus-validity.test.ts",
-      "line": 751,
+      "line": 753,
       "title": "declares ApiKeyAuth as the global default security requirement",
       "explicitId": "openwop.it.spec-corpus-validity.declares-apikeyauth-as-the-global-default-security-requirement",
       "citations": [
@@ -47018,7 +47018,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.only-documented-public-or-signed-token-operations-clear-security",
       "file": "spec-corpus-validity.test.ts",
-      "line": 762,
+      "line": 764,
       "title": "only documented public or signed-token operations clear security",
       "explicitId": "openwop.it.spec-corpus-validity.only-documented-public-or-signed-token-operations-clear-security",
       "citations": [
@@ -47036,7 +47036,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.protected-operations-document-canonical-401-and-403-auth-failure-responses",
       "file": "spec-corpus-validity.test.ts",
-      "line": 783,
+      "line": 785,
       "title": "protected operations document canonical 401 and 403 auth failure responses",
       "explicitId": "openwop.it.spec-corpus-validity.protected-operations-document-canonical-401-and-403-auth-failure-responses",
       "citations": [
@@ -47059,7 +47059,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.declares-both-the-literal-v1-agents-roster-org-chart-routes-and-the-agentid-para",
       "file": "spec-corpus-validity.test.ts",
-      "line": 810,
+      "line": 812,
       "title": "declares both the literal /v1/agents/{roster,org-chart} routes and the {agentId} param route",
       "explicitId": "openwop.it.spec-corpus-validity.declares-both-the-literal-v1-agents-roster-org-chart-routes-and-the-agentid-para",
       "citations": [
@@ -47072,7 +47072,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-v1-agents-agentid-param-excludes-the-reserved-literals-roster-org-chart",
       "file": "spec-corpus-validity.test.ts",
-      "line": 817,
+      "line": 819,
       "title": "every /v1/agents/{agentId} param excludes the reserved literals (roster, org-chart)",
       "explicitId": "openwop.it.spec-corpus-validity.every-v1-agents-agentid-param-excludes-the-reserved-literals-roster-org-chart",
       "citations": [
@@ -47089,7 +47089,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.the-reserved-literal-exclusion-pattern-rejects-roster-org-chart-and-accepts-a-re",
       "file": "spec-corpus-validity.test.ts",
-      "line": 828,
+      "line": 830,
       "title": "the reserved-literal exclusion pattern rejects roster/org-chart and accepts a real agentId",
       "explicitId": "openwop.it.spec-corpus-validity.the-reserved-literal-exclusion-pattern-rejects-roster-org-chart-and-accepts-a-re",
       "citations": [
@@ -47106,7 +47106,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.the-agent-manifest-agentid-pattern-can-never-produce-a-reserved-literal-defense",
       "file": "spec-corpus-validity.test.ts",
-      "line": 835,
+      "line": 837,
       "title": "the agent-manifest agentId pattern can never produce a reserved literal (defense in depth)",
       "explicitId": "openwop.it.spec-corpus-validity.the-agent-manifest-agentid-pattern-can-never-produce-a-reserved-literal-defense",
       "citations": [
@@ -47127,7 +47127,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.typed-error-specializations-compose-the-canonical-error-schema",
       "file": "spec-corpus-validity.test.ts",
-      "line": 847,
+      "line": 849,
       "title": "typed error specializations compose the canonical Error schema",
       "explicitId": "openwop.it.spec-corpus-validity.typed-error-specializations-compose-the-canonical-error-schema",
       "citations": [
@@ -47151,7 +47151,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-openapi-operationid-is-represented-in-conformance-coverage-md",
       "file": "spec-corpus-validity.test.ts",
-      "line": 872,
+      "line": 874,
       "title": "every OpenAPI operationId is represented in conformance/coverage.md",
       "explicitId": "openwop.it.spec-corpus-validity.every-openapi-operationid-is-represented-in-conformance-coverage-md",
       "citations": [
@@ -47169,7 +47169,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-openapi-operation-has-a-matching-method-path-row-in-rest-endpoints-md",
       "file": "spec-corpus-validity.test.ts",
-      "line": 892,
+      "line": 894,
       "title": "every OpenAPI operation has a matching method/path row in rest-endpoints.md",
       "explicitId": "openwop.it.spec-corpus-validity.every-openapi-operation-has-a-matching-method-path-row-in-rest-endpoints-md",
       "citations": [
@@ -47191,7 +47191,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.rest-catalog-auth-scope-columns-match-openapi-security-overrides",
       "file": "spec-corpus-validity.test.ts",
-      "line": 910,
+      "line": 912,
       "title": "REST catalog auth/scope columns match OpenAPI security overrides",
       "explicitId": "openwop.it.spec-corpus-validity.rest-catalog-auth-scope-columns-match-openapi-security-overrides",
       "citations": [
@@ -47225,7 +47225,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.does-not-document-retry-conflict-metadata-as-top-level-error-fields",
       "file": "spec-corpus-validity.test.ts",
-      "line": 949,
+      "line": 951,
       "title": null,
       "explicitId": "openwop.it.spec-corpus-validity.does-not-document-retry-conflict-metadata-as-top-level-error-fields",
       "citations": [
@@ -47244,7 +47244,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.typescript-exports-http-error-codes-and-ishttperrorcode",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1003,
+      "line": 1005,
       "title": "TypeScript exports HTTP_ERROR_CODES and isHttpErrorCode",
       "explicitId": "openwop.it.spec-corpus-validity.typescript-exports-http-error-codes-and-ishttperrorcode",
       "citations": [
@@ -47261,7 +47261,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.python-exports-http-error-codes-and-is-http-error-code",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1010,
+      "line": 1012,
       "title": "Python exports HTTP_ERROR_CODES and is_http_error_code",
       "explicitId": "openwop.it.spec-corpus-validity.python-exports-http-error-codes-and-is-http-error-code",
       "citations": [
@@ -47278,7 +47278,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.go-exports-httperrorcodes-and-ishttperrorcode",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1017,
+      "line": 1019,
       "title": "Go exports HTTPErrorCodes and IsHTTPErrorCode",
       "explicitId": "openwop.it.spec-corpus-validity.go-exports-httperrorcodes-and-ishttperrorcode",
       "citations": [
@@ -47295,7 +47295,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.sdk-readmes-document-the-http-error-helper-surface",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1024,
+      "line": 1026,
       "title": "SDK READMEs document the HTTP error helper surface",
       "explicitId": "openwop.it.spec-corpus-validity.sdk-readmes-document-the-http-error-helper-surface",
       "citations": [
@@ -47308,7 +47308,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.sdk-changelogs-mention-the-http-error-helper-surface",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1033,
+      "line": 1035,
       "title": "SDK changelogs mention the HTTP error helper surface",
       "explicitId": "openwop.it.spec-corpus-validity.sdk-changelogs-mention-the-http-error-helper-surface",
       "citations": [
@@ -47321,7 +47321,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.typescript-dist-exports-the-http-error-helper-surface",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1042,
+      "line": 1044,
       "title": "TypeScript dist exports the HTTP error helper surface",
       "explicitId": "openwop.it.spec-corpus-validity.typescript-dist-exports-the-http-error-helper-surface",
       "citations": [
@@ -47335,7 +47335,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.typescript-dist-metadata-uses-openwop-branding",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1058,
+      "line": 1060,
       "title": "TypeScript dist metadata uses openwop branding",
       "explicitId": "openwop.it.spec-corpus-validity.typescript-dist-metadata-uses-openwop-branding",
       "citations": [
@@ -47354,7 +47354,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.typescript-dist-source-maps-point-back-to-src-and-avoid-legacy-branding",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1066,
+      "line": 1068,
       "title": "TypeScript dist source maps point back to src and avoid legacy branding",
       "explicitId": "openwop.it.spec-corpus-validity.typescript-dist-source-maps-point-back-to-src-and-avoid-legacy-branding",
       "citations": [
@@ -47383,7 +47383,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.all-sdk-http-error-helpers-include",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1095,
+      "line": 1097,
       "title": null,
       "explicitId": "openwop.it.spec-corpus-validity.all-sdk-http-error-helpers-include",
       "citations": [
@@ -47397,7 +47397,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.readme-suite-count-equals-src-scenarios-test-ts-count",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1111,
+      "line": 1113,
       "title": "README suite count equals src/scenarios/*.test.ts count",
       "explicitId": "openwop.it.spec-corpus-validity.readme-suite-count-equals-src-scenarios-test-ts-count",
       "citations": [
@@ -47418,7 +47418,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.exists~2",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1131,
+      "line": 1133,
       "title": "exists",
       "explicitId": "openwop.it.spec-corpus-validity.exists~2",
       "citations": [
@@ -47431,7 +47431,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.declares-asyncapi-3-1-required-top-level-keys",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1135,
+      "line": 1137,
       "title": "declares asyncapi: 3.1 + required top-level keys",
       "explicitId": "openwop.it.spec-corpus-validity.declares-asyncapi-3-1-required-top-level-keys",
       "citations": [
@@ -47444,7 +47444,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-ref-to-schemas-json-resolves-to-a-real-file~2",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1144,
+      "line": 1146,
       "title": "every $ref to ../schemas/*.json resolves to a real file",
       "explicitId": "openwop.it.spec-corpus-validity.every-ref-to-schemas-json-resolves-to-a-real-file~2",
       "citations": [
@@ -47458,7 +47458,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.named-runeventdoc-messages-use-event-names-from-run-event-schema-json",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1153,
+      "line": 1155,
       "title": "named RunEventDoc messages use event names from run-event.schema.json",
       "explicitId": "openwop.it.spec-corpus-validity.named-runeventdoc-messages-use-event-names-from-run-event-schema-json",
       "citations": [
@@ -47476,7 +47476,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.operation-channel-refs-point-to-declared-channels",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1174,
+      "line": 1176,
       "title": "operation channel refs point to declared channels",
       "explicitId": "openwop.it.spec-corpus-validity.operation-channel-refs-point-to-declared-channels",
       "citations": [
@@ -47498,7 +47498,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.channel-keys-and-message-names-are-unique",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1196,
+      "line": 1198,
       "title": "channel keys and message names are unique",
       "explicitId": "openwop.it.spec-corpus-validity.channel-keys-and-message-names-are-unique",
       "citations": [
@@ -47517,7 +47517,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.finds-the-expected-prose-doc-set",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1243,
+      "line": 1245,
       "title": "finds the expected prose doc set",
       "explicitId": "openwop.it.spec-corpus-validity.finds-the-expected-prose-doc-set",
       "citations": [
@@ -47530,7 +47530,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.declares-a-status-tag-stub-draft-outline-final-stable-stabilizing-draft-experime",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1250,
+      "line": 1252,
       "title": null,
       "explicitId": "openwop.it.spec-corpus-validity.declares-a-status-tag-stub-draft-outline-final-stable-stabilizing-draft-experime",
       "citations": [
@@ -47544,7 +47544,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.readme-total-count-equals-the-number-of-spec-v2-core-docs",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1279,
+      "line": 1281,
       "title": "README Total count equals the number of spec/v2/core docs",
       "explicitId": "openwop.it.spec-corpus-validity.readme-total-count-equals-the-number-of-spec-v2-core-docs",
       "citations": [
@@ -47561,7 +47561,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.readme-document-index-links-every-spec-v2-core-doc-exactly-once",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1289,
+      "line": 1291,
       "title": "README document index links every spec/v2/core doc exactly once",
       "explicitId": "openwop.it.spec-corpus-validity.readme-document-index-links-every-spec-v2-core-doc-exactly-once",
       "citations": [
@@ -47575,7 +47575,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.finds-markdown-files-to-check",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1315,
+      "line": 1317,
       "title": "finds Markdown files to check",
       "explicitId": "openwop.it.spec-corpus-validity.finds-markdown-files-to-check",
       "citations": [
@@ -47588,7 +47588,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.has-no-broken-local-markdown-file-links",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1321,
+      "line": 1323,
       "title": null,
       "explicitId": "openwop.it.spec-corpus-validity.has-no-broken-local-markdown-file-links",
       "citations": [
@@ -47602,7 +47602,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.scans-public-docs-and-schemas",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1409,
+      "line": 1411,
       "title": "scans public docs and schemas",
       "explicitId": "openwop.it.spec-corpus-validity.scans-public-docs-and-schemas",
       "citations": [
@@ -47615,7 +47615,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.has-no-private-implementation-or-pre-v1-breadcrumbs",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1415,
+      "line": 1417,
       "title": null,
       "explicitId": "openwop.it.spec-corpus-validity.has-no-private-implementation-or-pre-v1-breadcrumbs",
       "citations": [
@@ -47629,7 +47629,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-fixture-id-mentioned-in-fixtures-md-has-a-corresponding-json",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1453,
+      "line": 1455,
       "title": "every fixture id mentioned in fixtures.md has a corresponding JSON",
       "explicitId": "openwop.it.spec-corpus-validity.every-fixture-id-mentioned-in-fixtures-md-has-a-corresponding-json",
       "citations": [
@@ -47643,7 +47643,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.every-fixture-json-file-is-referenced-by-fixtures-md",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1495,
+      "line": 1497,
       "title": "every fixture JSON file is referenced by fixtures.md",
       "explicitId": "openwop.it.spec-corpus-validity.every-fixture-json-file-is-referenced-by-fixtures-md",
       "citations": [
@@ -47657,7 +47657,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.a-sample-bundle-validates-against-conformance-certification-bundle-schema-json",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1548,
+      "line": 1550,
       "title": "a sample bundle validates against conformance-certification-bundle.schema.json",
       "explicitId": "openwop.it.spec-corpus-validity.a-sample-bundle-validates-against-conformance-certification-bundle-schema-json",
       "citations": [
@@ -47671,7 +47671,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.verifybundle-accepts-a-claim-that-is-discovery-derivable-and-floor-proven-b",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1554,
+      "line": 1556,
       "title": "verifyBundle ACCEPTS a claim that is discovery-derivable AND floor-proven (§B)",
       "explicitId": "openwop.it.spec-corpus-validity.verifybundle-accepts-a-claim-that-is-discovery-derivable-and-floor-proven-b",
       "citations": [
@@ -47684,7 +47684,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.verifybundle-rejects-a-profile-its-discovery-document-does-not-derive-b-1",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1561,
+      "line": 1563,
       "title": "verifyBundle REJECTS a profile its discovery document does not derive (§B(1))",
       "explicitId": "openwop.it.spec-corpus-validity.verifybundle-rejects-a-profile-its-discovery-document-does-not-derive-b-1",
       "citations": [
@@ -47697,7 +47697,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.verifybundle-rejects-a-bundle-missing-a-floor-scenario-b-2",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1571,
+      "line": 1573,
       "title": "verifyBundle REJECTS a bundle missing a floor scenario (§B(2))",
       "explicitId": "openwop.it.spec-corpus-validity.verifybundle-rejects-a-bundle-missing-a-floor-scenario-b-2",
       "citations": [
@@ -47710,7 +47710,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.the-committed-bundle-file-exists-generated-by-certify",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1608,
+      "line": 1610,
       "title": "the committed bundle file exists (generated by --certify)",
       "explicitId": "openwop.it.spec-corpus-validity.the-committed-bundle-file-exists-generated-by-certify",
       "citations": [
@@ -47724,7 +47724,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.the-committed-reference-bundle-validates-against-the-bundle-schema-a",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1612,
+      "line": 1614,
       "title": "the committed reference bundle validates against the bundle schema (§A)",
       "explicitId": "openwop.it.spec-corpus-validity.the-committed-reference-bundle-validates-against-the-bundle-schema-a",
       "citations": [
@@ -47738,7 +47738,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.verifybundle-rejects-the-committed-reference-bundle-it-is-invalidated-rfc-0148-d",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1619,
+      "line": 1621,
       "title": "verifyBundle REJECTS the committed reference bundle — it is `invalidated` (RFC 0148 §D)",
       "explicitId": "openwop.it.spec-corpus-validity.verifybundle-rejects-the-committed-reference-bundle-it-is-invalidated-rfc-0148-d",
       "citations": [
@@ -47759,7 +47759,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.discovery-sha256-is-the-canonical-json-sha-256-of-the-captured-discovery-documen",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1645,
+      "line": 1647,
       "title": "discovery.sha256 is the canonical-JSON SHA-256 of the captured discovery.document",
       "explicitId": "openwop.it.spec-corpus-validity.discovery-sha256-is-the-canonical-json-sha-256-of-the-captured-discovery-documen",
       "citations": [
@@ -47772,7 +47772,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.the-requestbody-closes-at-the-composition-unevaluatedproperties-not-inside-a-bra",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1706,
+      "line": 1708,
       "title": "the requestBody closes at the composition (unevaluatedProperties), not inside a branch",
       "explicitId": "openwop.it.spec-corpus-validity.the-requestbody-closes-at-the-composition-unevaluatedproperties-not-inside-a-bra",
       "citations": [
@@ -47785,7 +47785,7 @@
     {
       "id": "openwop.it.spec-corpus-validity.canonical-createrun-bodies-pass-the-composed-schema-an-undeclared-property-fails",
       "file": "spec-corpus-validity.test.ts",
-      "line": 1721,
+      "line": 1723,
       "title": "canonical createRun bodies PASS the composed schema; an undeclared property FAILS",
       "explicitId": "openwop.it.spec-corpus-validity.canonical-createrun-bodies-pass-the-composed-schema-an-undeclared-property-fails",
       "citations": [
@@ -47796,6 +47796,37 @@
         {
           "section": "spec-corpus-validity.test.ts (no spec citation in file)",
           "requirement": "RFC 0094 §A: an undeclared property MUST still fail at the composed level (unevaluatedProperties: false)"
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.spec-corpus-validity.a-minimal-valid-v2-createrun-body-passes-the-composed-requestbody",
+      "file": "spec-corpus-validity.test.ts",
+      "line": 1806,
+      "title": "a minimal valid v2 createRun body PASSES the composed requestBody",
+      "explicitId": "openwop.it.spec-corpus-validity.a-minimal-valid-v2-createrun-body-passes-the-composed-requestbody",
+      "citations": [
+        {
+          "section": "runs.md §Create; RFC 0094 §A",
+          "requirement": null,
+          "interpolated": true
+        }
+      ]
+    },
+    {
+      "id": "openwop.it.spec-corpus-validity.an-unknown-top-level-field-fails-the-composed-v2-createrun-requestbody",
+      "file": "spec-corpus-validity.test.ts",
+      "line": 1819,
+      "title": "an unknown top-level field FAILS the composed v2 createRun requestBody",
+      "explicitId": "openwop.it.spec-corpus-validity.an-unknown-top-level-field-fails-the-composed-v2-createrun-requestbody",
+      "citations": [
+        {
+          "section": "runs.md §Run options; RFC 0094 §A",
+          "requirement": "the composed v2 createRun request body MUST close with `unevaluatedProperties: false` at the composition site"
+        },
+        {
+          "section": "runs.md §Run options; RFC 0094 §A",
+          "requirement": "an unknown top-level createRun field MUST still fail the composed requestBody (no branch may switch `unevaluatedProperties: false` off)"
         }
       ]
     },

@@ -31,6 +31,8 @@
  *  19. OpenAPI error specializations compose the canonical ErrorEnvelope.
  *  20. REST/auth/idempotency prose examples keep contextual error metadata under details.
  *  21. SDK error-code helpers expose canonical HTTP envelope codes.
+ *  22. The v2 createRun request body (api/v2) is satisfiable and still closed (RFC 0094 §A).
+ *  22. The v2 createRun request body (api/v2) is satisfiable and still closed (RFC 0094 §A).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -1762,6 +1764,65 @@ describe('spec-corpus: createRun composed request schema is satisfiable (RFC 009
     expect(
       validate({ workflowId: 'wf-1', definitelyNotASpecField: true }),
       req('openwop.it.spec-corpus-validity.canonical-createrun-bodies-pass-the-composed-schema-an-undeclared-property-fails', 'spec-corpus-validity.test.ts (no spec citation in file)', 'RFC 0094 §A: an undeclared property MUST still fail at the composed level (unevaluatedProperties: false)'),
+    ).toBe(false);
+  });
+});
+
+const V2_OPENAPI_PATH = join(API_DIR, 'v2', 'openapi.yaml');
+const V2_SCHEMAS_DIR = join(SCHEMAS_DIR, 'v2');
+
+describe.skipIf(V1_DIR === null || !existsSync(V2_OPENAPI_PATH))('spec-corpus: v2 createRun request body is satisfiable under strict validation (RFC 0094 §A)', () => {
+  // RFC 0094 §A repaired the v1 createRun body; v2 re-cut run-options.schema.json
+  // with `additionalProperties: false` at its root while api/v2/openapi.yaml kept
+  // it as an `allOf` branch beside the inline `{ workflowId, inputs, … }` branch.
+  // Under 2020-12 a branch's `additionalProperties` is evaluated locally, so EVERY
+  // createRun body failed the run-options branch on its own `workflowId`. The
+  // opposite repair is just as wrong: `additionalProperties: true` marks every
+  // property evaluated and switches the composed `unevaluatedProperties: false`
+  // off. So this compiles the REAL requestBody of api/v2/openapi.yaml against the
+  // REAL schemas/v2 tree, both directions: a minimal valid body passes, an unknown
+  // top-level field fails. PyYAML reads the document, as derive-v2-api.py does;
+  // the corpus has no Node YAML parser.
+  function compileCreateRunBody() {
+    const r = spawnSync('python3', ['-c', 'import sys,yaml,json; json.dump(yaml.safe_load(open(sys.argv[1])), sys.stdout)', V2_OPENAPI_PATH], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+    expect(r.status, `python3 + PyYAML must read api/v2/openapi.yaml (python3 -m pip install pyyaml): ${String(r.stderr ?? '').trim()}`).toBe(0);
+    const api = JSON.parse(r.stdout) as { paths: Record<string, Record<string, { operationId?: string; requestBody?: { content: Record<string, { schema: unknown }> } }>> };
+    const op = Object.values(api.paths).flatMap((item) => Object.values(item)).find((o) => o?.operationId === 'createRun');
+    expect(op?.requestBody, 'api/v2/openapi.yaml MUST declare createRun with a requestBody').toBeDefined();
+    // The operation's relative refs (`../../schemas/v2/x.schema.json#…`) become the
+    // schemas' own `$id`s, so ajv resolves them against the registered v2 tree.
+    const prefix = '../../schemas/v2/';
+    const rewrite = (n: unknown): unknown => Array.isArray(n) ? n.map(rewrite)
+      : n !== null && typeof n === 'object' ? Object.fromEntries(Object.entries(n as Record<string, unknown>).map(([k, v]) =>
+        [k, k === '$ref' && typeof v === 'string' && v.startsWith(prefix) ? `https://openwop.dev/spec/v2/${v.slice(prefix.length)}` : rewrite(v)]))
+      : n;
+    const body = rewrite(op!.requestBody!.content['application/json']!.schema) as Record<string, unknown>;
+    const ajv = new Ajv2020({ allErrors: true, strict: false });
+    addFormats(ajv);
+    for (const rel of listJsonFiles(V2_SCHEMAS_DIR).filter((f) => f.endsWith('.schema.json'))) ajv.addSchema(readJson(join(V2_SCHEMAS_DIR, rel)) as Record<string, unknown>);
+    return { body, validate: ajv.compile({ $schema: 'https://json-schema.org/draft/2020-12/schema', ...body }) };
+  }
+
+  it('a minimal valid v2 createRun body PASSES the composed requestBody', () => {
+    const { validate } = compileCreateRunBody();
+    for (const ok of [
+      { workflowId: 'wf', inputs: {} },
+      { workflowId: 'wf', inputs: {}, configurable: { version: 1, ai: { model: 'm' } }, tags: ['conformance'], metadata: {} },
+    ]) {
+      expect(
+        validate(ok),
+        req('openwop.it.spec-corpus-validity.a-minimal-valid-v2-createrun-body-passes-the-composed-requestbody', 'runs.md §Create; RFC 0094 §A', `a valid createRun body ${JSON.stringify(ok)} MUST satisfy the composed api/v2 requestBody under strict 2020-12 validation; ajv said: ${JSON.stringify(validate.errors)}`),
+      ).toBe(true);
+    }
+  });
+
+  it('an unknown top-level field FAILS the composed v2 createRun requestBody', () => {
+    const { body, validate } = compileCreateRunBody();
+    const ID = 'openwop.it.spec-corpus-validity.an-unknown-top-level-field-fails-the-composed-v2-createrun-requestbody';
+    expect(body['unevaluatedProperties'], req(ID, 'runs.md §Run options; RFC 0094 §A', 'the composed v2 createRun request body MUST close with `unevaluatedProperties: false` at the composition site')).toBe(false);
+    expect(
+      validate({ workflowId: 'wf', inputs: {}, definitelyNotASpecField: true }),
+      req(ID, 'runs.md §Run options; RFC 0094 §A', 'an unknown top-level createRun field MUST still fail the composed requestBody (no branch may switch `unevaluatedProperties: false` off)'),
     ).toBe(false);
   });
 });

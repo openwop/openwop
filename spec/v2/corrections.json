@@ -2,7 +2,7 @@
   "$schema": "./corrections.schema.json",
   "$comment": "RFC 0197 §A.4 — v2 Class-3 corrections. Seeded with P3 only. The 2.8.2 removal of `workflowChainPacks.deferredParameters` and `.hostExpansionSeam` (P1) is deliberately NOT seeded: a committed bundle carried `deferredParameters` and then failed `capabilities-root-closed`, so the row would fail R3 — which is the point. P1 is recorded as the motivating defect in COMPATIBILITY.md §3a, not laundered into this register.",
   "version": 1,
-  "updated": "2026-10-31",
+  "updated": "2026-11-25",
   "rows": [
     {
       "id": "openwop.correction.v2.1",
@@ -115,6 +115,22 @@
         "manifests": 13,
         "manifestsScanned": 656,
         "note": "Bundle leg: re-measured by check-v2-retirement through bundlesCarrying for every discovery-visible pointer; the typed count is that scan. The ext family a2uiSurface had no capabilities seat, so no bundle can carry it. Registry leg, openwop-registry origin/main f228326, read-only 2026-10-30: 13 of 656 published version manifests (registry/v1 and registry/v2) name a deleted surface. Eleven are vendor.myndhyve packs whose peerDependencies name aiEnvelope or host.aiEnvelope; their current versions (brand, kanban and web-research 2.0.0, registry#103) do not, and vendor.myndhyve.ai 1.0.1 and 1.0.2 are yanked, so no pack's newest non-yanked v2 version needs a deleted family (evidence/cross-repo-manifests.json registryCurrentPeerDependencyKeys). The other two are vendor.openwop.workflow-chain-sample 1.0.0 and 1.0.1, which carry envelopeType only inside opaque node config that no schema reads. Production census of the deleted run surfaces (RFC 0255 Motivation): 0 envelope_correlations rows, 0 fenced emissions in invocation_log, 4 stored ui.a2ui-surface events. Those 4 stay readable: run-event-payloads keeps the event type, and no persisted-data reader is removed."
+      }
+    },
+    {
+      "id": "openwop.correction.v2.6",
+      "date": "2026-11-25",
+      "class": "w3c-class-3",
+      "rfc": "0094",
+      "pointers": [
+        "schemas/v2/run-options.schema.json#"
+      ],
+      "compatibilityEntry": "the v2 createRun body no valid request could satisfy",
+      "priorShapeCensus": {
+        "bundles": 0,
+        "manifests": 0,
+        "manifestsScanned": 185,
+        "note": "The prior shape is a closed root on an allOf branch of the api/v2 createRun request body, under which no body carrying workflowId validated. It is a request body, not a discovery or manifest surface. Bundle leg: 0 committed evidence/v2-host-bundles/*.json carry it, since a bundle's discovery.document never embeds a RunOptions. Registry leg, read-only 2026-11-25: 0 of 185 pack.json documents on openwop-registry origin/main (e998bc0) embed a RunOptions document. The only workflowId/configurable hit, vendor.openwop.app-builder.workflows, is a node-config parameter. Only validation loosened, and only for bodies runs.md already requires a host to accept, so nothing conforming stops conforming. The composed body's unevaluatedProperties: false still refuses every unknown top-level field."
       }
     }
   ]
