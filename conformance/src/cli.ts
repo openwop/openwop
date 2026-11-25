@@ -65,7 +65,7 @@ interface ParsedArgs {
   readonly apiKey: string | undefined;
   readonly offline: boolean;
   readonly filter: string | undefined;
-  /** Suite 2.0.0 (RFC 0168 §D.3): which protocol major's scenarios run. Default: the host's preferredVersion, else max(protocolVersions[]), else 2 (v1 ended 2026-10-04). */
+  /** Suite 2.0.0 (RFC 0168 §D.3): which protocol major's scenarios run. Default: the host's preferredVersion, else max(protocolVersions[]), else 1. */
   readonly targetMajor: 1 | 2 | undefined;
   readonly help: boolean;
   readonly impl: string | undefined;
@@ -288,7 +288,7 @@ Implementation labels (cosmetic — surface in failure messages):
 Certification (RFC 0089):
   --target-major <1|2>    Suite 2.0.0 (RFC 0168 §D.3): run the scenarios for this protocol
                           major. Default: the host's preferredVersion (RFC 0179), else
-                          max(protocolVersions[]), else 2. Selection is scenario-majors.json.
+                          max(protocolVersions[]), else 1. Selection is scenario-majors.json.
   --host-build <k>:<id>   v3: the build identity (image-digest|commit|artifact-sha256), or OPENWOP_HOST_BUILD.
   --signing-key <pem>     v3: Ed25519 private key (PKCS8 PEM) that signs the bundle, or OPENWOP_BUNDLE_SIGNING_KEY.
   --signing-key-id <id>   v3: the keyId the host publishes for that key, or OPENWOP_BUNDLE_SIGNING_KEY_ID.
@@ -461,9 +461,7 @@ async function resolveTargetMajor(args: ParsedArgs, baseUrl: string | undefined,
       if (pv) { major = Number(pv.split('.')[0]) >= 2 ? 2 : 1; source = doc.preferredVersion ? 'preferredVersion' : 'max(protocolVersions[])'; }
     } catch { /* unreachable host: the default below; the run itself will report the failure */ }
   }
-  // v1 reached end of support on 2026-10-04 (RFC 0234) and RFC 0168 §D removes the
-  // 1.x target at end of support, so a host that names no major is measured at 2.
-  if (major === undefined) { major = 2; source = 'default'; }
+  if (major === undefined) { major = 1; source = 'default'; }
   // Through the overlap `preferredVersion` names the 1.x member (versioning.md
   // §1.1), so auto-detection on a dual-stack host resolves to major 1 by design.
   // Say so, or an operator reads a v1 run as the host's only option.
