@@ -184,7 +184,9 @@ jobs:
           MIN_PASSED: '956'
           MAX_EXECUTED_FAIL: '2'
         run: |
-          set -uo pipefail
+          # The suite exits non-zero on its one known failure; the floor below
+          # is the verdict, so the step's default `bash -e` must not end it here.
+          set +e -uo pipefail
           npx -y "@openwop/openwop-conformance@${SUITE_VERSION}" \
             --base-url http://127.0.0.1:3841 --api-key openwop-postgres-dev-key \
             --target-major 2 --max-workers 2 2>&1 | tee /tmp/conformance.out
