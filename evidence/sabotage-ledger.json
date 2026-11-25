@@ -3948,6 +3948,114 @@
       "suiteVersion": "2.49.10",
       "result": "executed-fail",
       "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.webhooks.cross-tenant-delivery-isolated",
+      "scenario": "v2-webhook-tenant-isolation.test.ts",
+      "sabotage": "store.ts webhooksForTenant dropped its WHERE tenant = ?, so tenant A runs fanned out to tenant B subscription; B received run.started and run.completed for A run.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "775682a (suite 2.49.14 from source), src/store.ts sabotaged locally, one rule per boot, SQLite in a temp dir, OPENWOP_WEBHOOK_ALLOW_PRIVATE"
+      },
+      "suiteVersion": "2.49.14",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.webhooks.cross-tenant-unregister-refused",
+      "scenario": "v2-webhook-tenant-isolation.test.ts",
+      "sabotage": "unregisterWebhook dropped its tenant-bound and owner-tenant checks, so tenant B deleted tenant A subscription with a 204.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "775682a (suite 2.49.14 from source), src/webhooks.ts sabotaged locally, one rule per boot, SQLite in a temp dir, OPENWOP_WEBHOOK_ALLOW_PRIVATE"
+      },
+      "suiteVersion": "2.49.14",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.identity.owner-tenant-from-credential",
+      "scenario": "v2-attribution-host-derived.test.ts",
+      "sabotage": "authenticate took the Subject tenant from an X-Tenant-Id header when present, so a create asserting another tenant minted a run bound to it.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "775682a (suite 2.49.14 from source), src/identity.ts sabotaged locally, one rule per boot, SQLite in a temp dir, OPENWOP_WEBHOOK_ALLOW_PRIVATE"
+      },
+      "suiteVersion": "2.49.14",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.interrupt.resolved-by-not-body-named",
+      "scenario": "v2-attribution-host-derived.test.ts",
+      "sabotage": "resolveAndResume recorded resumeValue.resolvedBy as interrupt.resolved.resolvedBy when the body named one, instead of the authenticated Subject.",
+      "subject": {
+        "host": "openwop-examples v2-reference",
+        "build": "775682a (suite 2.49.14 from source), src/executor.ts sabotaged locally, one rule per boot, SQLite in a temp dir, OPENWOP_WEBHOOK_ALLOW_PRIVATE"
+      },
+      "suiteVersion": "2.49.14",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.tool-catalog.exec-host-extension-only",
+      "scenario": "v2-exec-not-protocol-tier.test.ts",
+      "sabotage": "the exec => host-extension allOf conditional was removed from the v2 tool descriptor schema, so an exec node-pack descriptor validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "f0afc5006 (suite 2.49.14), schemas/v2/tool-descriptor.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.14",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.tool-catalog.exec-not-protocol-owned",
+      "scenario": "v2-exec-not-protocol-tier.test.ts",
+      "sabotage": "a core.exec identifier was planted in a v2 schema (toolId examples), naming a protocol-owned exec-class primitive.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "f0afc5006 (suite 2.49.14), schemas/v2/tool-descriptor.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.14",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.connection-packs.manifest-no-credential-material",
+      "scenario": "v2-connection-pack-manifest-guards.test.ts",
+      "sabotage": "provider.auth was opened to additionalProperties: true in the v2 connection-pack manifest schema, so a clientSecret member validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "f0afc5006 (suite 2.49.14), schemas/v2/connection-pack-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.14",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.connection-packs.api-host-shape",
+      "scenario": "v2-connection-pack-manifest-guards.test.ts",
+      "sabotage": "the apiHosts items pattern was dropped from the v2 connection-pack manifest schema, so an IPv4-literal apiHosts entry validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "f0afc5006 (suite 2.49.14), schemas/v2/connection-pack-manifest.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.14",
+      "result": "executed-fail",
+      "date": "2026-11-25"
+    },
+    {
+      "requirementId": "openwop.requirement.execution.runner-frames-credential-free",
+      "scenario": "v2-runner-frame-credential-free.test.ts",
+      "sabotage": "the v2 self-hosted-runner result frame was opened to additionalProperties: true, so a result frame carrying a credential member validated.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "f0afc5006 (suite 2.49.14), schemas/v2/self-hosted-runner-result-frame.schema.json sabotaged locally"
+      },
+      "suiteVersion": "2.49.14",
+      "result": "executed-fail",
+      "date": "2026-11-25"
     }
   ]
 }

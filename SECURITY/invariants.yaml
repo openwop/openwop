@@ -40,6 +40,11 @@
 #   2. Add an entry here.
 #   3. If protocol-tier, ensure at least one test glob resolves.
 #   4. The CI gate verifies on every push.
+#   5. If protocol-tier and `critical`, at least one test MUST run at protocol
+#      major 2 (conformance/scenario-majors.json) — a v1-only witness checks
+#      no current host. `scripts/report-invariant-majors.mjs --check` (run by
+#      check-security-invariants.sh) enforces it against the shrink-only
+#      baseline SECURITY/invariant-v2-gaps.json.
 #
 # Removing an invariant requires an RFC per RFCS/0001-rfc-process.md
 # because invariants are part of the security commitment.
@@ -230,6 +235,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/self-hosted-runner.test.ts
+      - conformance/src/scenarios/v2-runner-frame-credential-free.test.ts
     note: |
       RFC 0122 §Behavior clause 2: a self-hosted runner's local credential (a
       subscription CLI login per RFC 0121, a private endpoint key per RFC 0108)
@@ -783,6 +789,7 @@ invariants:
     tests:
       - conformance/src/scenarios/approval-payload.test.ts
       - conformance/src/scenarios/identity-passthrough.test.ts
+      - conformance/src/scenarios/v2-attribution-host-derived.test.ts
     note: |
       decidedBy must be host-derived; client-supplied value ignored.
     witness: witnessable-unaided
@@ -925,6 +932,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/identity-passthrough.test.ts
+      - conformance/src/scenarios/v2-attribution-host-derived.test.ts
     note: |
       tenantId / workspaceId derived from auth principal; envelope-supplied
       values ignored.
@@ -975,6 +983,7 @@ invariants:
     threat_model: SECURITY/threat-model-prompt-injection.md
     tests:
       - conformance/src/scenarios/exec-not-protocol-tier.test.ts
+      - conformance/src/scenarios/v2-exec-not-protocol-tier.test.ts
     note: |
       RFC 0069. Arbitrary-command (`exec`-class) execution MUST NOT be a
       protocol-tier capability. The protocol defines NO exec-class tool
@@ -1204,6 +1213,7 @@ invariants:
     tests:
       - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-host-process-escape.test.ts
+      - conformance/src/scenarios/v2-pack-isolation.test.ts
     note: |
       RFC 0035 §A invariant 4. Sandboxed code MUST NOT spawn host
       processes, fork, or call exec-family syscalls. GRADUATED
@@ -1243,6 +1253,7 @@ invariants:
     tests:
       - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-network-escape.test.ts
+      - conformance/src/scenarios/v2-pack-isolation.test.ts
     note: |
       RFC 0035 §A invariant 3. Sandboxed code MUST NOT initiate
       network requests unless host.fetch (or equivalent) is in
@@ -1262,6 +1273,7 @@ invariants:
     tests:
       - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-host-fs-escape.test.ts
+      - conformance/src/scenarios/v2-pack-isolation.test.ts
     note: |
       RFC 0035 §A invariant 1. Sandboxed code MUST NOT read or write
       files outside the host-advertised sandbox root. GRADUATED
@@ -1280,6 +1292,7 @@ invariants:
     tests:
       - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-host-env-leak.test.ts
+      - conformance/src/scenarios/v2-pack-isolation.test.ts
     note: |
       RFC 0035 §A invariant 2. Host environment variables MUST NOT
       be visible to sandbox code unless the host has explicitly
@@ -1299,6 +1312,7 @@ invariants:
     tests:
       - conformance/src/scenarios/sandbox-wasm-timeout.test.ts
       - conformance/src/scenarios/sandbox-timeout-cap.test.ts
+      - conformance/src/scenarios/v2-pack-isolation.test.ts
     note: |
       RFC 0035 §A invariant 6. Exceeding capabilities.sandbox
       .wallClockLimitMs MUST fail the node with error.code:
@@ -1325,6 +1339,7 @@ invariants:
       - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-memory-cap.test.ts
       - conformance/src/scenarios/wasm-pack-memory-cap.test.ts
+      - conformance/src/scenarios/v2-pack-isolation.test.ts
     note: |
       RFC 0035 §A invariant 5. Exceeding capabilities.sandbox
       .memoryLimitBytes MUST fail the node with error.code:
@@ -1345,6 +1360,7 @@ invariants:
     tests:
       - conformance/src/scenarios/sandbox-wasm-isolation.test.ts
       - conformance/src/scenarios/sandbox-no-cross-pack-mutation.test.ts
+      - conformance/src/scenarios/v2-pack-isolation.test.ts
     note: |
       RFC 0035 §A invariant 8. Sandboxed code from pack A MUST NOT
       mutate state visible to pack B inside the same host process.
@@ -1574,6 +1590,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/http-client-ssrf.test.ts
+      - conformance/src/scenarios/v2-safefetch-ssrf-refused.test.ts
     note: |
       Hosts advertising `capabilities.httpClient` MUST declare
       `ssrfGuard: true` AND `maxResponseBodyBytes` (a positive integer).
@@ -2480,6 +2497,7 @@ invariants:
     threat_model: SECURITY/threat-model-auth-profiles.md
     tests:
       - conformance/src/scenarios/auth-subject-link.test.ts
+      - conformance/src/scenarios/v2-subject-link-record.test.ts
     note: |
       RFC 0159 §A.3 (auth-profiles.md §Subject linking): on a host advertising
       BOTH `openwop-auth-saml` and `openwop-auth-scim` (RFC 0164 — the profile
@@ -2502,6 +2520,7 @@ invariants:
     tests:
       - conformance/src/scenarios/auth-subject-link-key-class.test.ts
       - conformance/src/scenarios/auth-subject-link.test.ts
+      - conformance/src/scenarios/v2-auth-subject-link-key.test.ts
     note: |
       RFC 0163 §A / RFC 0159 §A.2 (RFC 0164: any host advertising both
       openwop-auth-saml and openwop-auth-scim) MUST advertise
@@ -2759,6 +2778,7 @@ invariants:
     tests:
       - conformance/src/scenarios/replay-llm-cache-key.test.ts
       - conformance/src/scenarios/replay-llm-cache-key-portable.test.ts
+      - conformance/src/scenarios/v2-replay-llm-cache-key.test.ts
     note: |
       RFC 0041 §A + §E. The LLM cache-key recipe per
       `replay.md` §"LLM cache-key recipe" §A + §B + §C MUST be
@@ -3321,6 +3341,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/webhook-tenant-isolation.test.ts
+      - conformance/src/scenarios/v2-webhook-tenant-isolation.test.ts
     note: |
       RFC 0093 §A: a webhook subscription MUST receive only events from
       runs within the subscription's tenant scope — the tenant established
@@ -3371,6 +3392,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/connection-pack-no-credential-material.test.ts
+      - conformance/src/scenarios/v2-connection-pack-manifest-guards.test.ts
     note: |
       RFC 0095 / connection-packs.md §Manifest clause 2. A connection-pack
       manifest (kind: "connection") is PUBLIC provider metadata and MUST NOT
@@ -3398,6 +3420,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/connection-pack-apihosts.test.ts
+      - conformance/src/scenarios/v2-connection-pack-manifest-guards.test.ts
     note: |
       RFC 0120 / connection-packs.md §Manifest items 11 + 13. A connection-pack
       `provider.apiHosts` entry governs WHERE a resolved credential may be sent
@@ -3639,6 +3662,7 @@ invariants:
     threat_model: SECURITY/threat-model-secret-leakage.md
     tests:
       - conformance/src/scenarios/a2a-task-roundtrip.test.ts
+      - conformance/src/scenarios/v2-a2a-operation-map.test.ts
     note: |
       RFC 0100 §4 / a2a-integration.md §"Async / durable Tasks". A
       caller-registered A2A push-notification `pushConfig.url` MUST be validated
@@ -4167,6 +4191,7 @@ invariants:
     threat_model: SECURITY/threat-model-auth-profiles.md
     tests:
       - conformance/src/scenarios/owner-subject-shape.test.ts
+      - conformance/src/scenarios/v2-owner-subject-required.test.ts
     note: |
       RFC 0165 §B.2. `owner.subject.subjectId` MUST be an opaque, stable,
       issuer-scoped identifier — never an email address, a display name, a

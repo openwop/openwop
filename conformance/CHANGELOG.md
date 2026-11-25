@@ -1,3 +1,7 @@
+## [2.49.15] — 2026-11-25 — Critical security invariants at major 2
+
+- **Five new v2 scenarios.** `v2-webhook-tenant-isolation`, `v2-attribution-host-derived`, `v2-exec-not-protocol-tier`, `v2-connection-pack-manifest-guards` and `v2-runner-frame-credential-free` witness critical `SECURITY/invariants.yaml` rules at major 2; 13 invariants re-point to existing v2 legs that already assert them.
+
 ## [2.49.14] — 2026-11-25 — The composed createRun body validates
 
 - **`spec-corpus-validity`.** Two legs: a minimal valid `POST /runs` body passes the composed requestBody schema, and a body with an unknown top-level field fails it. No host-facing scenario change.

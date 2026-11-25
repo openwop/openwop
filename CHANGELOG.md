@@ -31,6 +31,12 @@ Entries before this file was condensed carried full development detail. That tex
 
 ### Security
 
+## [2.49.15] — 2026-11-25 — Critical security invariants witnessed at v2
+
+- **Critical security invariants run at major 2.** Five new v2 scenarios and 13 re-pointed v2 legs; `report-invariant-majors --check` fails a critical invariant with no major-2 test unless the shrink-only `SECURITY/invariant-v2-gaps.json` lists it.
+- **RFC 0266 §E: registry discovery names v2 first.** `packs.md` §"The registry tree" says `endpoints` names the v2 tree, and the v1 tree until the v1 installability floor (2027-09-05); the `registry-version-manifest` and `security-advisory` descriptions name `registry/v2/packs/` paths.
+- **Retention floors pin the real last 1.x SDKs.** `spec/v2/retention-floors.json` names `@openwop/openwop` 1.10.0, `openwop-client` 1.8.0 and Go `v1.7.0`, the versions the registries hold.
+
 ## [2.49.14] — 2026-11-25 — POST /runs accepts a valid body
 
 - **`POST /runs` accepts a valid body again.** `schemas/v2/run-options.schema.json` no longer closes its own root, which made every createRun body fail strict validation (RFC 0094 §A, correction `openwop.correction.v2.6`); unknown fields still fail at the composed body.
