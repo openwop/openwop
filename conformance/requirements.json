@@ -28173,6 +28173,14 @@
         },
         {
           "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "one reject of three under majority does not decide the gate: the run MUST stay waiting-approval"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
+          "requirement": "a vote that does not decide the gate MUST NOT emit interrupt.resolved"
+        },
+        {
+          "section": "spec/v2/core/interrupt.md §Rejection (RFC 0223)",
           "requirement": null,
           "interpolated": true
         },
@@ -28185,7 +28193,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-routed-over-an-any-failed-edge-fails-as-a-node-its-all-success-s",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 207,
+      "line": 215,
       "title": "a rejected gate routed over an any_failed edge fails as a node, its all_success sibling never runs, and the run completes",
       "explicitId": "openwop.requirement.0223.reject-routed",
       "citations": [
@@ -28211,7 +28219,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.an-unresolved-gate-past-its-timeoutms-with-no-ontimeout-is-resolved-rejected-by",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 226,
+      "line": 234,
       "title": "an unresolved gate past its timeoutMs with no onTimeout is resolved rejected by the host and fails the run naming the gate",
       "explicitId": "openwop.requirement.0223.timeout-rejects",
       "citations": [
@@ -28232,7 +28240,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-gate-whose-ontimeout-is-approve-still-resolves-rejected-on-timeout-and-fails-t",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 245,
+      "line": 253,
       "title": "a gate whose onTimeout is approve still resolves rejected on timeout and fails the run: a timeout never grants",
       "explicitId": "openwop.requirement.0223.timeout-never-grants",
       "citations": [
@@ -28254,7 +28262,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-rejected-gate-looped-back-to-itself-is-asked-again-under-a-new-key-and-the-fir",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 263,
+      "line": 271,
       "title": "a rejected gate looped back to itself is asked again under a new key, and the first rejection is not replayed",
       "explicitId": "openwop.requirement.0223.reject-loopback-reasks",
       "citations": [
@@ -28280,7 +28288,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-replay-fork-of-a-decided-reject-derives-the-rejection-from-the-log-and-never-r",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 339,
+      "line": 347,
       "title": "a replay fork of a decided reject derives the rejection from the log and never re-decides it (leg A)",
       "explicitId": null,
       "citations": [
@@ -28293,7 +28301,7 @@
     {
       "id": "openwop.it.v2-approval-reject-disposition.a-replay-fork-of-a-timed-out-gate-derives-the-timeout-rejection-from-the-log-and",
       "file": "v2-approval-reject-disposition.test.ts",
-      "line": 354,
+      "line": 362,
       "title": "a replay fork of a timed-out gate derives the timeout rejection from the log and never re-arms it (leg B)",
       "explicitId": null,
       "citations": [
@@ -34163,6 +34171,11 @@
         },
         {
           "section": null,
+          "requirement": null,
+          "interpolated": true
+        },
+        {
+          "section": null,
           "requirement": "the opaque segment carries ≥128 bits (length ≥ 22 is the observable proxy; the entropy itself is unwitnessable)",
           "interpolated": true
         },
@@ -34176,7 +34189,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-get-projects-input-required-keyed-by-interruptid-and-a-failed-run-as-compl",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 291,
+      "line": 294,
       "title": "tasks/get projects input_required keyed by interruptId, and a failed run as completed with isError true",
       "explicitId": "openwop.requirement.0198.task-status-projection",
       "citations": [
@@ -34213,7 +34226,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-update-answered-twice-resolves-the-interrupt-once-and-the-task-completes",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 323,
+      "line": 326,
       "title": "tasks/update answered twice resolves the interrupt once and the task completes",
       "explicitId": "openwop.requirement.0198.task-update-resolves-once",
       "citations": [
@@ -34241,7 +34254,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-tasks-update-from-a-caller-not-in-approverslist-resolves-nothing",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 343,
+      "line": 346,
       "title": "a tasks/update from a caller not in approversList resolves nothing",
       "explicitId": "openwop.requirement.0198.task-update-approver-checked",
       "citations": [
@@ -34269,7 +34282,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-get-appends-nothing-to-the-run-log",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 374,
+      "line": 377,
       "title": "tasks/get appends nothing to the run log",
       "explicitId": "openwop.requirement.0198.task-get-read-only",
       "citations": [
@@ -34283,7 +34296,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.an-unreadable-task-is-answered-32602-exactly-as-a-nonexistent-one",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 389,
+      "line": 392,
       "title": "an unreadable task is answered -32602 exactly as a nonexistent one",
       "explicitId": "openwop.requirement.0198.task-unreadable-not-found",
       "citations": [
@@ -34315,7 +34328,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-subscriptions-listen-acknowledgement-leaves-out-a-task-the-caller-cannot-read",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 422,
+      "line": 425,
       "title": "a subscriptions/listen acknowledgement leaves out a task the caller cannot read",
       "explicitId": "openwop.requirement.0198.listen-omits-unreadable",
       "citations": [
@@ -34343,7 +34356,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.tasks-cancel-cancels-the-run-on-a-terminal-task-it-is-acknowledged-and-appends-n",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 444,
+      "line": 447,
       "title": "tasks/cancel cancels the run; on a terminal task it is acknowledged and appends nothing",
       "explicitId": "openwop.requirement.0198.task-cancel-cancels-run",
       "citations": [
@@ -34375,7 +34388,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-client-disconnect-before-the-host-answers-a-task-less-tools-call-cancels-the-r",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 463,
+      "line": 466,
       "title": "a client disconnect before the host answers a task-less tools/call cancels the run it started",
       "explicitId": "openwop.requirement.0198.disconnect-cancels-run",
       "citations": [
@@ -34398,7 +34411,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-disconnect-after-createtaskresult-never-affects-the-run",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 483,
+      "line": 486,
       "title": "a disconnect after CreateTaskResult never affects the run",
       "explicitId": "openwop.requirement.0198.task-survives-disconnect",
       "citations": [
@@ -34417,7 +34430,7 @@
     {
       "id": "openwop.it.v2-mcp-tasks.a-blocking-tools-call-on-an-sse-stream-whose-run-is-cancelled-carries-no-notific",
       "file": "v2-mcp-tasks.test.ts",
-      "line": 498,
+      "line": 501,
       "title": "a blocking tools/call on an SSE stream whose run is cancelled carries no notifications/cancelled and ends isError true",
       "explicitId": "openwop.requirement.0198.no-server-cancelled",
       "citations": [
@@ -37766,7 +37779,7 @@
     {
       "id": "openwop.it.v2-run-list.two-runs-the-caller-just-created-appear-every-id-is-bound-to-the-caller-s-tenant",
       "file": "v2-run-list.test.ts",
-      "line": 59,
+      "line": 60,
       "title": "two runs the caller just created appear, every id is bound to the caller's tenant, and no page exceeds maxPageSize",
       "explicitId": "openwop.requirement.0182.run-list.tenant-scoped",
       "citations": [
@@ -37805,7 +37818,7 @@
     {
       "id": "openwop.it.v2-run-list.a-cursor-the-host-did-not-mint-is-refused-400-validation-error",
       "file": "v2-run-list.test.ts",
-      "line": 82,
+      "line": 83,
       "title": "a cursor the host did not mint is refused 400 validation_error",
       "explicitId": "openwop.requirement.0182.run-list.cursor-refused",
       "citations": [
@@ -37823,7 +37836,7 @@
     {
       "id": "openwop.it.v2-run-list.when-the-filters-facet-names-workflowid-a-filtered-list-contains-only-that-workf",
       "file": "v2-run-list.test.ts",
-      "line": 91,
+      "line": 92,
       "title": "when the filters facet names workflowId, a filtered list contains only that workflow",
       "explicitId": "openwop.requirement.0182.run-list.filter-exact",
       "citations": [
@@ -40084,13 +40097,18 @@
           "section": "RFC 0188 §B.1",
           "requirement": null,
           "interpolated": true
+        },
+        {
+          "section": "RFC 0188 §B.1",
+          "requirement": null,
+          "interpolated": true
         }
       ]
     },
     {
       "id": "openwop.it.v2-webhook-durable-delivery.every-logged-event-of-a-subscribed-type-reaches-a-healthy-receiver-at-least-once",
       "file": "v2-webhook-durable-delivery.test.ts",
-      "line": 693,
+      "line": 698,
       "title": "every logged event of a subscribed type reaches a healthy receiver at least once within the retry bound",
       "explicitId": "openwop.requirement.0173.webhook-delivery-complete",
       "citations": [

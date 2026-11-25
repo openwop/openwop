@@ -32,6 +32,11 @@ Entries before this file was condensed carried full development detail. That tex
 ### Security
 
 
+## [2.49.9] — 2026-11-25 — Four legs catch the sabotage they missed
+
+- **Four suite legs strengthened (RFC 0263 G3 backfill).** `0182.run-list.filter-exact`, `0198.task-id-is-run-id`, `0188.dead-letter-content-free` and `0223.quorum-reject-fails-run` each passed a host that broke its rule; each now fails it.
+- **Ledger ids.** The sabotage-ledger check admits a family-named id such as `errors.event-code-registered`, as RFC 0263 §B's "the cited id" already did.
+
 ## [2.49.8] — 2026-11-22 — RFC 0260 Accepted
 
 - **RFC 0260 Accepted.** openwop-app's certified 2.49.7 cut (`2640fa782`, 573/0/0) passes every `0260.*` leg: each sampling parameter enters the LLM cache key, recorded on the effect ledger. Each leg has a red sabotage run (RFC 0263 §C). G6 closes. §B review deferred by steward exemption.

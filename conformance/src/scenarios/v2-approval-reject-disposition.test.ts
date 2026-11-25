@@ -187,6 +187,13 @@ describe('RFC 0223 — v2-approval-reject-disposition (gated on interrupt + conf
     if (first === null || first.status < 200 || first.status >= 300) return softSkip('blocked', `the first reject vote answered ${first?.status ?? 'nothing'} ${readErrorCode(first?.json) ?? ''}`);
     const between = (await snapshot(s.runId))?.['status'];
     const resolvedEarly = (await events(s.runId)).some((e) => e.type === 'interrupt.resolved');
+    // Judged before the second vote: a host whose first reject already decides the gate
+    // answers that vote 409, and the leg used to record `blocked` there (RFC 0263 G3 backfill).
+    // Asserted here only when violated, so a conformant host records nothing before the skips below.
+    if (between !== 'waiting-approval' || resolvedEarly) {
+      expect(between, req(id, DOC, 'one reject of three under majority does not decide the gate: the run MUST stay waiting-approval')).toBe('waiting-approval');
+      expect(resolvedEarly, req(id, DOC, 'a vote that does not decide the gate MUST NOT emit interrupt.resolved')).toBe(false);
+    }
     const second = await resolve(s.runId, { action: 'reject', voter: 'approver-2' });
     if (second === null || second.status < 200 || second.status >= 300) return softSkip('blocked', `the second reject vote answered ${second?.status ?? 'nothing'} ${readErrorCode(second?.json) ?? ''}`);
     const terminal = await waitStatus(s.runId, TERMINAL, 10_000);
@@ -195,6 +202,7 @@ describe('RFC 0223 — v2-approval-reject-disposition (gated on interrupt + conf
       // `voter` is a suite convention, not a protocol field: a host without the
       // seams profile rightly counts the bearer, and one bearer cannot cause a
       // majority there. Only a seams host that ignores it is `blocked`.
+      // partial-witness-ok: the first-vote expects above run only on a violation, and then throw, so none has passed when this skip is reached.
       if (!seamsProfileAdvertised(await v2Discovery().catch(() => null))) return softSkip('inapplicable', 'the host counted both votes as one approver: one bearer, and the resume value\'s voter stand-in is a seams-profile convention this seam-free host rightly ignores; a majority needs distinct principals');
       return softSkip('blocked', 'the host counted both votes as one approver (one bearer; the resume value\'s voter was not honoured), so a majority could not be caused');
     }
