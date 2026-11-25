@@ -250,6 +250,11 @@ node "$(dirname "$0")/generate-review-packet.mjs" --check
 # under spec/v1/, which stops being operative on the EOS date with nothing to
 # notice. Two ratchets, both due to reach zero before that date.
 node "$(dirname "$0")/check-v2-normative-home.mjs"
+# RFC 0266 §B.1 — no file under spec/v2, schemas/v2 or api/v2 cites frozen v1 as a
+# rule home: every v1 reference is on the allow-list (history or to-rehome), and a
+# stale row fails. Acceptance runs it again with --require-zero-rehome.
+node "$(dirname "$0")/check-v2-self-contained.mjs"
+node "$(dirname "$0")/check-v2-self-contained.mjs" --self-test
 # RFC 0156 §F — the assurance manifest is current AND no public surface carries
 # a claim token the manifest does not permit (RFC 0147 §A claim table).
 node "$(dirname "$0")/generate-assurance-status.mjs" --check

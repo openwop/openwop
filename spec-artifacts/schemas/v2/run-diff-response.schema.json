@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openwop.dev/spec/v2/run-diff-response.schema.json",
   "title": "RunDiffResponse",
-  "description": "RFC 0054 — deterministic, replay-aware structured diff of two runs' event sequences and terminal states, returned by GET /runs/{runId}:diff?against={otherRunId}. The diff is a pure function of the two event logs (see spec/v1/replay.md determinism contract).",
+  "description": "RFC 0054 — deterministic, replay-aware structured diff of two runs' event sequences and terminal states, returned by GET /runs/{runId}:diff?against={otherRunId}. The diff is a pure function of the two event logs (see spec/v2/core/replay.md §Determinism caveats).",
   "type": "object",
   "required": [
     "a",
@@ -25,7 +25,7 @@
         "null"
       ],
       "minimum": 0,
-      "description": "Event sequence number at which the two logs first diverge; null if identical. Aligns with replay.diverged.divergencePoint in spec/v1/replay.md."
+      "description": "Event sequence number at which the two logs first diverge; null if identical. Aligns with replay.diverged.divergencePoint in spec/v2/core/replay.md §Divergence."
     },
     "eventDiffs": {
       "type": "array",
@@ -75,6 +75,5 @@
       "description": "True if either run was in-flight and only a prefix was compared."
     }
   },
-  "additionalProperties": false,
-  "x-openwop-seeded-from": "v1"
+  "additionalProperties": false
 }

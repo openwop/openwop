@@ -31,6 +31,11 @@ Entries before this file was condensed carried full development detail. That tex
 
 ### Security
 
+## [2.49.11] — 2026-11-25 — RFC 0266 §B: the v2 citation gate
+
+- **RFC 0266 §B.1: `check-v2-self-contained`.** A new gate lists every v1 reference in `spec/v2`, `schemas/v2` and `api/v2` (323 today: 98 history, 225 to-rehome) and fails on an unlisted one or a stale allow-list row; `--require-zero-rehome` is the acceptance check.
+- **RFC 0266 §B: v2 cites v2.** Twin-doc references in v2 schemas now point at `spec/v2/core` (idempotency, replay, interrupt, connection and form-content packs) and the v2 deprecation register; RFC 0266's home table gains twelve concepts the gate found.
+
 ## [2.49.10] — 2026-11-25 — RFC 0266 Active: v2 owns its registers
 
 - **RFC 0266 Active: v2 is self-contained.** No current v2 artifact may depend on frozen v1: v2 owns its registers, every v2 rule gets a v2 home, v2 stops being generated from v1, and the spec package drops v1 after acceptance. No wire change; comment window waived (`MAINTAINERS.md`).

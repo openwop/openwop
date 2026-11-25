@@ -1,3 +1,7 @@
+## [2.49.11] — 2026-11-25 — RFC 0266 §B.1 legs in the normative-home gate
+
+- **`v2-normative-home-gate`.** New legs for `openwop.requirement.0266.no-v1-rule-citation`: `check-v2-self-contained` fails on an unlisted v1 citation in `spec/v2`, `schemas/v2` or `api/v2`, and on a stale allow-list row. No host-facing scenario change.
+
 ## [2.49.10] — 2026-11-25 — A host that names no major is measured at major 2
 
 - **`--target-major` fallback.** When a host names no major (no reachable discovery, or neither `preferredVersion` nor `protocolVersions`), the suite now runs major 2 instead of 1. v1 ended on 2026-10-04 (RFC 0234); RFC 0168 §D removes the 1.x target at end of support. Hosts that advertise their versions are measured as before.

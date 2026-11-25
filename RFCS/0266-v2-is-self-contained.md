@@ -56,6 +56,25 @@ v1 reached end of support on 2026-10-04 (RFC 0234), and its tree is frozen as hi
 
 A concept that no v2 schema, operation or event uses is not re-homed; its v2 references are deleted instead.
 
+> **Added 2026-11-25 (from the §B.1 gate's first inventory, `scripts/v2-self-contained-allowlist.json`):** the table above missed concepts that v2 files also cite only in v1. Their homes:
+>
+> | Concept (v1 home) | v2 home |
+> | --- | --- |
+> | A2A composition (`a2a-integration.md`) | `spec/v2/core/interop.md` §A2A |
+> | Localized content (`localized-content.md`) | `spec/v2/core/i18n.md` |
+> | Production profile (`production-profile.md`) | `spec/v2/core/conformance.md` §Profiles |
+> | Registry operations (`registry-operations.md`) | `spec/v2/core/packs.md` §"The registry tree" |
+> | Interrupt profiles (`interrupt-profiles.md`) | `spec/v2/core/interrupt.md` |
+> | Agent memory (`agent-memory.md`) | `spec/v2/core/host-services.md` §`memory` |
+> | Version negotiation (`version-negotiation.md`) | `spec/v2/core/versioning.md` |
+> | Multi-agent execution (`multi-agent-execution.md`) | `spec/v2/core/execution.md` |
+> | Auth profiles (`auth-profiles.md`) | `spec/v2/core/identity.md` |
+> | Capability change detection (`capabilities-change-detection.md`) | `spec/v2/core/capabilities.md` |
+> | REST endpoint catalogue (`rest-endpoints.md`) | `api/v2/openapi.yaml` (descriptions) |
+> | Frontend plugin packs (`frontend-plugin-packs.md`) | `spec/v2/core/packs.md` |
+>
+> Where a v2 twin document already exists (idempotency, interrupt, replay, connection packs, form-content packs), the reference is re-pointed, not re-homed.
+
 ### §C. v2 is generated from v2
 
 **§C.1** `api/v2/openapi.yaml`, `api/v2/asyncapi.yaml` and `schemas/v2/*` are their own source. `derive-v2-api.py` and `derive-v2-schemas.mjs` stop reading v1 inputs; after a one-time cut-over they either derive only from v2 sources or are retired, and `openwop-check.sh` stops running the v1→v2 derivation. No v2 schema carries `x-openwop-seeded-from: v1`.
@@ -94,7 +113,7 @@ These are corpus rules, so most are witnessed by the corpus gate rather than a h
 | Requirement | Observable — what an outside party sees | Who can cause the condition | Verdict |
 | --- | --- | --- | --- |
 | §A.1–§A.3 registers in v2 (`openwop.requirement.0266.registers-v2`) | `check-v2-self-contained` (planned): the four citing sites name `spec/v2/*.json`; the registers validate against their schemas | anyone editing the corpus; `check-v2-self-contained` fails on a v1 register citation | witnessable (corpus gate) |
-| §B.1 no v1 rule citation (`openwop.requirement.0266.no-v1-rule-citation`) | `check-v2-self-contained` (planned) lists every v1 reference in `spec/v2`, `schemas/v2`, `api/v2`; an unlisted one fails it | the gate, unaided (sabotage: add a `spec/v1/` citation to a v2 doc) | witnessable (corpus gate) |
+| §B.1 no v1 rule citation (`openwop.requirement.0266.no-v1-rule-citation`) | `check-v2-self-contained` lists every v1 reference in `spec/v2`, `schemas/v2`, `api/v2`; an unlisted one, or a stale allow-list row, fails it (`v2-normative-home-gate.test.ts`) | the gate, unaided (sabotage: add a `spec/v1/` citation to a v2 doc) | witnessable (corpus gate) |
 | §B.2 prose homes (`openwop.requirement.0266.prose-homes`) | `check-v2-self-contained` (planned): each concept's v2 home exists; `check-v2-self-contained` finds no v1 doc name for it | the gate | witnessable (corpus gate) |
 | §C.1 v2 generated from v2 (`openwop.requirement.0266.v2-from-v2`) | `check-v2-self-contained` (planned): no `x-openwop-seeded-from: v1`; `openwop-check.sh` reads no v1 input | the gate (sabotage: re-add the stamp) | witnessable (corpus gate) |
 | §D.1 package contents (`openwop.requirement.0266.package-v2-only`) | `check-v2-self-contained --package` (planned): `npm pack` of `@openwop/spec-artifacts` lists no v1 file | anyone, from the published tarball | witnessable |

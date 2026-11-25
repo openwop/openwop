@@ -3924,6 +3924,30 @@
       "suiteVersion": "2.49.6",
       "result": "executed-fail",
       "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0266.no-v1-rule-citation",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "evaluate skipped a finding the allow-list does not name, so a spec/v1/ citation planted in spec/v2/core/runs.md passed the gate.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "59385ad5e (suite 2.49.10), scripts/check-v2-self-contained.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.10",
+      "result": "executed-fail",
+      "date": "2026-11-24"
+    },
+    {
+      "requirementId": "openwop.requirement.0266.no-v1-rule-citation",
+      "scenario": "v2-normative-home-gate.test.ts",
+      "sabotage": "evaluate dropped the stale-row check, so an allow-list row whose reference is no longer in the tree passed the gate.",
+      "subject": {
+        "host": "openwop corpus",
+        "build": "59385ad5e (suite 2.49.10), scripts/check-v2-self-contained.mjs sabotaged locally"
+      },
+      "suiteVersion": "2.49.10",
+      "result": "executed-fail",
+      "date": "2026-11-24"
     }
   ]
 }
