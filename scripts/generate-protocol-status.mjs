@@ -84,14 +84,14 @@ function tableRow(cells) {
 }
 
 function openApiOperationIds() {
-  const text = read('api/openapi.yaml');
+  const text = read('api/v2/openapi.yaml');
   return [...text.matchAll(/^\s*operationId:\s*([A-Za-z0-9_]+)/gm)]
     .map((match) => match[1])
     .sort();
 }
 
 function asyncApiVersion() {
-  const text = read('api/asyncapi.yaml');
+  const text = read('api/v2/asyncapi.yaml');
   const match = text.match(/^asyncapi:\s*['"]?([^'"\s]+)['"]?/m);
   return match ? match[1] : 'unknown';
 }
@@ -117,13 +117,13 @@ function pyprojectVersion(rel) {
 // looks like "drift" when it is intentional. This table is the single source.
 function artifactVersions() {
   return [
-    { artifact: 'Spec corpus (root)', version: readJsonVersion('package.json'), source: '`package.json`', cadence: 'bumps only on a coordinated spec release' },
+    { artifact: 'Spec corpus (root)', version: readJsonVersion('package.json'), source: '`package.json`', cadence: 'names the corpus major (RFC 0266 §C.2); changes only at a new major' },
     { artifact: 'Conformance suite `@openwop/openwop-conformance`', version: readJsonVersion('conformance/package.json'), source: '`conformance/package.json`', cadence: 'minor on scenario add/remove' },
     // v2 charter §F "Identity" (RFC 0172 §B axis 14): the two API documents'
-    // info.version are version axes and were listed nowhere. Hand-maintained in
-    // v1; generated from the corpus tag at v2.
-    { artifact: 'OpenAPI `info.version`', version: yamlInfoVersion('api/openapi.yaml'), source: '`api/openapi.yaml`', cadence: 'hand-maintained in v1.x; generated from the corpus tag at v2 (RFC 0172 §B #14)' },
-    { artifact: 'AsyncAPI `info.version`', version: yamlInfoVersion('api/asyncapi.yaml'), source: '`api/asyncapi.yaml`', cadence: 'as above' },
+    // info.version are version axes; derive-v2-api.py stamps the v2 documents'
+    // from the corpus tag (spec/v2/release.json).
+    { artifact: 'OpenAPI `info.version`', version: yamlInfoVersion('api/v2/openapi.yaml'), source: '`api/v2/openapi.yaml`', cadence: 'the corpus tag (`spec/v2/release.json`, RFC 0172 §B #14)' },
+    { artifact: 'AsyncAPI `info.version`', version: yamlInfoVersion('api/v2/asyncapi.yaml'), source: '`api/v2/asyncapi.yaml`', cadence: 'as above' },
     ...siblingVersionRows(),
     // The three SDKs (`@openwop/openwop`, `openwop-client`, Go) were extracted to
     // openwop/openwop-sdks and are versioned there (tracking the spec major per
@@ -278,8 +278,9 @@ function staleStatusFindings(rfcs) {
   // Recompute the same corpus state generateStatus() uses, so we can structurally
   // compare README claims to actual counts rather than relying on grep patterns
   // that themselves go stale.
-  const specDocs = listFiles('spec/v1', (rel) => rel.endsWith('.md'));
-  const schemas = listFiles('schemas', (rel) => rel.endsWith('.schema.json'));
+  // RFC 0266 §C.2 — the headline counts are the v2 tree's; v1 is frozen history.
+  const specDocs = listFiles('spec/v2/core', (rel) => rel.endsWith('.md'));
+  const schemas = listFiles('schemas/v2', (rel) => rel.endsWith('.schema.json'));
   const operations = openApiOperationIds();
   const scenarios = listFiles('conformance/src/scenarios', (rel) => rel.endsWith('.test.ts'));
   const findings = [];
@@ -534,8 +535,9 @@ function staleStatusFindings(rfcs) {
 }
 
 function generateStatus() {
-  const specDocs = listFiles('spec/v1', (rel) => rel.endsWith('.md'));
-  const schemas = listFiles('schemas', (rel) => rel.endsWith('.schema.json'));
+  // RFC 0266 §C.2 — the headline counts are the v2 tree's; v1 is frozen history.
+  const specDocs = listFiles('spec/v2/core', (rel) => rel.endsWith('.md'));
+  const schemas = listFiles('schemas/v2', (rel) => rel.endsWith('.schema.json'));
   const operations = openApiOperationIds();
   const scenarios = listFiles('conformance/src/scenarios', (rel) => rel.endsWith('.test.ts'));
   const rfcs = parseRfcs();
@@ -567,16 +569,16 @@ function generateStatus() {
   lines.push('');
   lines.push('| Surface | Current value | Source |');
   lines.push('|---|---:|---|');
-  lines.push(tableRow(['Spec prose documents', String(specDocs.length), '`spec/v1/*.md`']));
-  lines.push(tableRow(['JSON Schemas', String(schemas.length), '`schemas/*.schema.json`']));
-  lines.push(tableRow(['OpenAPI operations', String(operations.length), '`api/openapi.yaml`']));
-  lines.push(tableRow(['AsyncAPI version', asyncApiVersion(), '`api/asyncapi.yaml`']));
+  lines.push(tableRow(['Spec prose documents', String(specDocs.length), '`spec/v2/core/*.md`']));
+  lines.push(tableRow(['JSON Schemas', String(schemas.length), '`schemas/v2/*.schema.json`']));
+  lines.push(tableRow(['OpenAPI operations', String(operations.length), '`api/v2/openapi.yaml`']));
+  lines.push(tableRow(['AsyncAPI version', asyncApiVersion(), '`api/v2/asyncapi.yaml`']));
   lines.push(tableRow(['Conformance scenario files', String(scenarios.length), '`conformance/src/scenarios/*.test.ts`']));
   lines.push(tableRow(['RFCs tracked', String(rfcs.length), '`RFCS/[0-9][0-9][0-9][0-9]-*.md`, excluding template']));
   lines.push('');
   lines.push('## Artifact Versions');
   lines.push('');
-  lines.push('> Per `PUBLISHING.md`, these artifacts version on independent cadences. The spec-corpus (root) version bumps only on a coordinated release, so it intentionally trails the per-artifact patch streams. This generated table is the single reconciled readout — read it instead of any one `package.json` in isolation.');
+  lines.push('> Per `PUBLISHING.md`, these artifacts version on independent cadences. The spec-corpus (root) version names the corpus major, so it intentionally differs from the per-artifact patch streams. This generated table is the single reconciled readout — read it instead of any one `package.json` in isolation.');
   lines.push('');
   lines.push('| Artifact | Version | Source | Cadence |');
   lines.push('|---|---|---|---|');
@@ -664,8 +666,9 @@ function generateStatus() {
 // re-resolve mechanically (`git checkout --theirs README.md && …--write`) with
 // no arithmetic. Idempotent: re-running on a current README is a no-op.
 function syncReadmeCounts() {
-  const specDocs = listFiles('spec/v1', (rel) => rel.endsWith('.md'));
-  const schemas = listFiles('schemas', (rel) => rel.endsWith('.schema.json'));
+  // RFC 0266 §C.2 — the headline counts are the v2 tree's; v1 is frozen history.
+  const specDocs = listFiles('spec/v2/core', (rel) => rel.endsWith('.md'));
+  const schemas = listFiles('schemas/v2', (rel) => rel.endsWith('.schema.json'));
   const operations = openApiOperationIds();
   const scenarios = listFiles('conformance/src/scenarios', (rel) => rel.endsWith('.test.ts'));
   const rfcs = parseRfcs();
