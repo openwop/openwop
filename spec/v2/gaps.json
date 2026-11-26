@@ -1,7 +1,7 @@
 {
   "$schema": "./gaps.schema.json",
   "version": 1,
-  "updated": "2026-11-25",
+  "updated": "2026-11-26",
   "witnessClasses": [
     "witnessable-unaided",
     "witnessable-gated",
@@ -10323,7 +10323,7 @@
       "witness": "unwitnessable",
       "requirementId": null,
       "disposition": "transferred",
-      "target": "ROADMAP.md#implementation-ecosystem",
+      "target": "ROADMAP.md#candidates-gated",
       "sources": [
         {
           "file": "RFCS/registers/0177-v2-registry-packs-and-extension-tail.gaps.md",
